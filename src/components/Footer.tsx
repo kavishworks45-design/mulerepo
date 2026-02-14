@@ -11,6 +11,9 @@ export function Footer() {
                         <p className="text-sm text-muted-foreground mt-2">
                             © {new Date().getFullYear()} MuleSaver Inc. All rights reserved.
                         </p>
+                        <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
+                            Built with <span className="text-red-500 animate-pulse">❤️</span> by <span className="text-white font-serif italic text-sm tracking-wide hover:tracking-widest transition-all duration-300 cursor-default">Kavish</span>
+                        </p>
                     </div>
 
                     <div className="flex gap-6">
