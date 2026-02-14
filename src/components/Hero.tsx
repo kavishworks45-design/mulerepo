@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, Clock, ShieldCheck, Zap, Database, ArrowUpRight, CheckCircle2, XCircle, Terminal, Layers, Lock, Gauge, Code2 } from "lucide-react";
+import { ArrowRight, Clock, ShieldCheck, Zap, Database, ArrowUpRight, CheckCircle2, XCircle, Terminal, Layers, Lock, Gauge, Code2, Rocket } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 export function Hero() {
@@ -49,6 +49,17 @@ export function Hero() {
                         style={{ transform: `translateX(${mousePosition.x * 50}px) translateY(${mousePosition.y * 50}px)` }}
                     ></div>
 
+                    {/* Rocket Animation Style */}
+                    <style jsx>{`
+                        @keyframes rocket-fly {
+                            0% { transform: translate(0, 0) scale(1); }
+                            20% { transform: translate(-1px, 1px) rotate(-1deg); }
+                            25% { transform: translate(1px, -1px) rotate(1deg); }
+                            30% { transform: translate(0, 0) scale(1); }
+                            100% { transform: translate(400px, -400px) scale(0.5); opacity: 0; }
+                        }
+                    `}</style>
+
                     {/* Slow Bar - Middle Depth */}
                     <div
                         className="mb-6 relative z-10"
@@ -74,11 +85,25 @@ export function Hero() {
                             <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-yellow-400 fill-yellow-400 animate-pulse" /> MuleRepo POC</span>
                             <span className="text-green-400 font-bold animate-[pulse_1s_infinite]">2h</span>
                         </div>
-                        <div className="h-4 w-full bg-zinc-800 rounded-full overflow-hidden border border-blue-500/30 shadow-[0_10px_20px_rgba(59,130,246,0.2)]">
-                            <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 w-full animate-[progress_1s_ease-out_forwards] relative overflow-hidden">
+                        <div className="h-4 w-full bg-zinc-800 rounded-full overflow-hidden border border-blue-500/30 shadow-[0_10px_20px_rgba(59,130,246,0.2)] relative">
+                            {/* Progress Bar */}
+                            <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 w-full animate-[progress_1s_ease-out_forwards] relative overflow-hidden z-20">
                                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 mix-blend-overlay"></div>
                                 <div className="absolute inset-0 bg-white/30 skew-x-12 -translate-x-full animate-[shimmer_1s_infinite]"></div>
                             </div>
+                        </div>
+
+                        {/* The Rocket - Launches after bar fills */}
+                        <div
+                            className="absolute -right-2 -top-8 text-white z-30"
+                            style={{
+                                animation: 'rocket-fly 3s ease-in forwards',
+                                animationDelay: '1.2s'
+                            }}
+                        >
+                            <Rocket className="h-8 w-8 text-white fill-orange-500 drop-shadow-[0_0_15px_rgba(255,165,0,0.8)] rotate-45" />
+                            {/* Engine Exhaust */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-1 h-4 bg-gradient-to-b from-orange-500 to-transparent opacity-0 animate-[fade-in_0.5s_forwards_1.2s]"></div>
                         </div>
                     </div>
                 </div>
@@ -238,10 +263,40 @@ export function Hero() {
 
                     <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl md:text-7xl max-w-4xl mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
                         MuleSoft POCs, <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 animate-gradient-x">
-                            Ready to Deploy.
+                        <span className="relative inline-block">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 animate-gradient-x">
+                                Ready to Deploy.
+                            </span>
+                            {/* The Looping Title Rocket */}
+                            <div className="absolute -right-12 bottom-2 md:bottom-4 inline-block z-10" style={{ animation: 'title-rocket-loop 8s ease-in-out infinite' }}>
+                                <Rocket className="h-8 w-8 md:h-12 md:w-12 text-orange-500 fill-orange-500 -rotate-45 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+                                {/* Rocket Fire Tail */}
+                                <div className="absolute top-[80%] -left-[20%] w-4 h-6 bg-gradient-to-t from-transparent to-orange-400 rounded-full blur-[2px] opacity-0 animate-[rocket-fire_8s_ease-in-out_infinite] transform rotate-45 origin-top"></div>
+                            </div>
                         </span>
                     </h1>
+
+                    <style jsx>{`
+                        @keyframes title-rocket-loop {
+                            0%, 30% { transform: translate(0, 0); }
+                            32% { transform: translate(-1px, 1px) rotate(-1deg); } 
+                            34% { transform: translate(1px, -1px) rotate(1deg); }
+                            36% { transform: translate(-1px, 1px) rotate(-1deg); }
+                            38% { transform: translate(1px, -1px) rotate(1deg); }
+                            40% { transform: translate(0, 5px) scale(1.1, 0.9); } /* Squash before launch */
+                            60% { transform: translate(0, -100vh) scale(0.8, 1.2); opacity: 1; } /* Zoom to top */
+                            61% { transform: translate(0, 50px) scale(1); opacity: 0; } /* Reset below */
+                            75% { transform: translate(0, 0) scale(1); opacity: 1; } /* Soft landing/Fade in */
+                            100% { transform: translate(0, 0); }
+                        }
+                        @keyframes rocket-fire {
+                            0%, 40% { opacity: 0; transform: scaleY(0); }
+                            42% { opacity: 1; transform: scaleY(1); }
+                            55% { opacity: 1; transform: scaleY(3); } /* Huge flame */
+                            60% { opacity: 0; transform: scaleY(4); }
+                            100% { opacity: 0; }
+                        }
+                    `}</style>
 
                     <p className="text-lg text-muted-foreground max-w-xl mb-10 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
                         Stop building from scratch. Access a curated repository of production-grade templates and integrations designed by Architects.
@@ -270,7 +325,7 @@ export function Hero() {
                         {/* Parallax Background Glow Layer */}
                         <div
                             className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[120%] transition-all duration-1000 rounded-[3rem] blur-[80px] -z-20 opacity-60 ${currentFeature.id === 'speed' ? 'bg-blue-600/30' :
-                                    currentFeature.id === 'reliability' ? 'bg-green-600/30' : 'bg-purple-600/30'
+                                currentFeature.id === 'reliability' ? 'bg-green-600/30' : 'bg-purple-600/30'
                                 }`}
                             style={{ transform: `translate(-50%, -50%) translateX(${mousePosition.x * -20}px) translateY(${mousePosition.y * -20}px)` }}
                         ></div>
@@ -300,7 +355,7 @@ export function Hero() {
                                             {/* Parallax Badge */}
                                             <div
                                                 className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-6 uppercase tracking-wider shadow-lg transform transition-transform duration-200 ${currentFeature.id === 'speed' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                                        currentFeature.id === 'reliability' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                                    currentFeature.id === 'reliability' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
                                                     }`}
                                                 style={{ transform: `translateX(${mousePosition.x * 15}px) translateY(${mousePosition.y * 15}px)` }}
                                             >
@@ -333,8 +388,8 @@ export function Hero() {
                                                 key={f.id}
                                                 onClick={() => setActiveFeature(i)}
                                                 className={`h-1.5 rounded-full transition-all duration-500 ${activeFeature === i
-                                                        ? `w-12 ${f.color === 'blue' ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : f.color === 'green' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]'}`
-                                                        : 'w-2 bg-zinc-800 hover:bg-zinc-600'
+                                                    ? `w-12 ${f.color === 'blue' ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : f.color === 'green' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]'}`
+                                                    : 'w-2 bg-zinc-800 hover:bg-zinc-600'
                                                     }`}
                                             >
                                                 {activeFeature === i && <span className="sr-only">Active</span>}
