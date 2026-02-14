@@ -50,99 +50,113 @@ export function Hero() {
 
                     {/* New Interactive Visual Representation */}
                     <div
-                        className="relative w-full max-w-5xl h-[400px] perspective-[1000px]"
-                        style={{ transform: `translateY(${elapsed * 0.2}px)` }}
+                        className="relative w-full max-w-5xl h-[450px] perspective-[1000px] mt-12"
+                        style={{ transform: `translateY(${elapsed * 0.1}px)` }}
                     >
-                        {/* Background Glow */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-blue-500/20 rounded-full blur-[100px] -z-10"></div>
+                        {/* Connecting Lines (Behind) */}
+                        <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent -translate-y-12 z-0 hidden md:block"></div>
 
-                        {/* Card 1: Left - SAP to Salesforce */}
-                        <div className="absolute top-10 left-4 md:left-20 w-64 md:w-72 bg-card/80 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-2xl animate-float-medium z-10 transform -rotate-6 hover:rotate-0 transition-transform duration-500">
-                            <div className="flex items-center gap-3 mb-3 border-b border-white/5 pb-2">
-                                <div className="h-8 w-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-500">
-                                    <Cloud className="h-5 w-5" />
+                        {/* Card 1: Left - Salesforce Trigger */}
+                        <div className="absolute top-20 left-4 md:left-10 w-64 bg-[#0F1115]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl animate-float-medium z-10 transform -rotate-6 hover:rotate-0 transition-transform duration-500 hover:border-blue-500/30 group">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="h-10 w-10 rounded-xl bg-[#00A1E0]/20 flex items-center justify-center text-[#00A1E0] shadow-lg shadow-[#00A1E0]/10 border border-[#00A1E0]/20">
+                                    <Cloud className="h-6 w-6" />
                                 </div>
-                                <div className="h-4 w-4 text-muted-foreground">↔</div>
-                                <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-500">
+                                <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 border border-white/5 px-2 py-1 rounded">
+                                    sf-org-main
+                                </span>
+                            </div>
+                            <h3 className="text-zinc-100 font-semibold mb-1">Salesforce Cloud</h3>
+                            <p className="text-xs text-zinc-500 mb-4">New Opportunity Trigger</p>
+
+                            <div className="bg-zinc-900/50 rounded-lg p-3 border border-white/5 space-y-2">
+                                <div className="flex justify-between text-[10px] text-zinc-400">
+                                    <span>Type</span>
+                                    <span className="text-white">Closed Won</span>
+                                </div>
+                                <div className="flex justify-between text-[10px] text-zinc-400">
+                                    <span>Amount</span>
+                                    <span className="text-green-400">$250,000</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 2: Center - Mule Flow */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 md:w-96 bg-[#18181b] border border-white/10 rounded-2xl p-0 shadow-[0_0_50px_-12px_rgba(59,130,246,0.3)] animate-float-slow z-20 overflow-hidden hover:border-blue-500/50 transition-colors duration-500">
+                            {/* Mac-style Header */}
+                            <div className="bg-[#27272a] px-4 py-3 flex items-center border-b border-white/5">
+                                <div className="flex gap-2 mr-4">
+                                    <div className="h-3 w-3 rounded-full bg-red-500/80"></div>
+                                    <div className="h-3 w-3 rounded-full bg-yellow-500/80"></div>
+                                    <div className="h-3 w-3 rounded-full bg-green-500/80"></div>
+                                </div>
+                                <div className="text-xs font-mono text-zinc-400">sync-process.xml</div>
+                            </div>
+
+                            {/* Flow Visualization */}
+                            <div className="p-6 relative">
+                                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:16px_16px] opacity-50"></div>
+
+                                <div className="relative z-10 flex flex-col gap-4">
+                                    {/* Component 1 */}
+                                    <div className="flex items-center gap-3 bg-zinc-900 border border-white/10 p-3 rounded-lg hover:border-blue-500/30 transition-colors">
+                                        <div className="h-8 w-8 rounded bg-blue-600/20 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                            <Globe className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-medium text-white">HTTP Listener</div>
+                                            <div className="text-[10px] text-zinc-500">/api/v1/sync</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-4 border-l-2 border-dashed border-zinc-700 ml-7"></div>
+
+                                    {/* Component 2 */}
+                                    <div className="flex items-center gap-3 bg-zinc-900 border border-white/10 p-3 rounded-lg hover:border-purple-500/30 transition-colors">
+                                        <div className="h-8 w-8 rounded bg-purple-600/20 text-purple-400 flex items-center justify-center border border-purple-500/20">
+                                            <Zap className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-medium text-white">DataWeave</div>
+                                            <div className="text-[10px] text-zinc-500">Map Objects</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-4 border-l-2 border-dashed border-zinc-700 ml-7"></div>
+
+                                    {/* Component 3 */}
+                                    <div className="flex items-center gap-3 bg-zinc-900 border border-white/10 p-3 rounded-lg hover:border-green-500/30 transition-colors">
+                                        <div className="h-8 w-8 rounded bg-green-600/20 text-green-400 flex items-center justify-center border border-green-500/20">
+                                            <ArrowRight className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-medium text-white">Async Request</div>
+                                            <div className="text-[10px] text-zinc-500">To SAP</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 3: Right - SAP Success */}
+                        <div className="absolute top-24 right-4 md:right-10 w-64 bg-[#0F1115]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl animate-float-fast z-10 transform rotate-6 hover:rotate-0 transition-transform duration-500 hover:border-green-500/30 group">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="h-10 w-10 rounded-xl bg-blue-900/40 flex items-center justify-center text-white border border-blue-500/20 shadow-lg shadow-blue-500/10">
                                     <Database className="h-5 w-5" />
                                 </div>
-                                <div>
-                                    <div className="text-sm font-semibold text-foreground">SAP ↔ Salesforce</div>
-                                    <div className="text-xs text-muted-foreground">Sync Pattern</div>
-                                </div>
+                                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                             </div>
-                            <div className="space-y-2">
-                                <div className="h-2 w-3/4 bg-border/50 rounded"></div>
-                                <div className="h-2 w-1/2 bg-border/50 rounded"></div>
-                            </div>
-                            <div className="mt-4 flex gap-2">
-                                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Batch</span>
-                                <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-1 rounded-full">Reliable</span>
-                            </div>
-                        </div>
+                            <h3 className="text-zinc-100 font-semibold mb-1">SAP S/4HANA</h3>
+                            <p className="text-xs text-zinc-500 mb-4">Order Processor</p>
 
-                        {/* Card 2: Center - API Led */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 md:w-80 bg-card border border-white/10 rounded-xl p-5 shadow-2xl animate-float-slow z-20">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2">
-                                    {/* Mulesoft Flow visual dots */}
-                                    <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                                    <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
-                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                            <div className="bg-zinc-900/50 rounded-lg p-3 border border-white/5 space-y-2">
+                                <div className="flex items-center gap-2 text-[10px] text-green-400">
+                                    <div className="h-3 w-3 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/50">✓</div>
+                                    Record Sync Success
                                 </div>
-                                <span className="text-xs font-mono text-muted-foreground">api-led-v1.xml</span>
-                            </div>
-                            <div className="space-y-3 font-mono text-xs">
-                                <div className="flex gap-2">
-                                    <span className="text-purple-400">flow</span>
-                                    <span className="text-yellow-400">"process-order"</span>
+                                <div className="bg-black/50 rounded px-2 py-1 font-mono text-[10px] text-zinc-400 group-hover:text-zinc-300 transition-colors">
+                                    ID: SAP-882910
                                 </div>
-                                <div className="pl-4 border-l border-white/10">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Globe className="h-3 w-3 text-green-400" />
-                                        <span>HTTP Listener</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-muted-foreground mt-2">
-                                        <Lock className="h-3 w-3 text-orange-400" />
-                                        <span>Validate Headers</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-blue-400 mt-2">
-                                        <Zap className="h-3 w-3" />
-                                        <span>Transform Message</span>
-                                    </div>
-                                </div>
-                                <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
-                                    <span className="text-xs text-muted-foreground">Status</span>
-                                    <span className="text-xs text-green-400 flex items-center gap-1">
-                                        <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                                        Deployed
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Card 3: Right - Database & Security */}
-                        <div className="absolute top-16 right-4 md:right-20 w-64 md:w-72 bg-card/80 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-2xl animate-float-fast z-10 transform rotate-6 hover:rotate-0 transition-transform duration-500">
-                            <div className="flex items-center gap-3 mb-3 border-b border-white/5 pb-2">
-                                <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500">
-                                    <Database className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-semibold text-foreground">Secure DB</div>
-                                    <div className="text-xs text-muted-foreground">Postgres Connector</div>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>Encryption</span>
-                                    <span className="text-green-400">Enabled</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-border/50 rounded-full overflow-hidden">
-                                    <div className="h-full bg-green-500 w-[95%]"></div>
-                                </div>
-                            </div>
-                            <div className="mt-4 flex gap-2">
-                                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">High Availability</span>
                             </div>
                         </div>
 
