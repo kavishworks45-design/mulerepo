@@ -136,84 +136,184 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                 {/* Tab Content */}
                 <div className="container px-4 mx-auto min-h-[500px]">
                     {activeTab === 'overview' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="lg:col-span-2 space-y-8">
                                 <section>
-                                    <h3 className="text-xl font-semibold mb-4 text-white">Architecture Overview</h3>
-                                    <div className="bg-[#18181b] rounded-xl border border-white/5 p-1 h-[300px] relative overflow-hidden group">
-                                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:20px_20px]"></div>
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            {/* Simplified Flow Visualization */}
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <div className="w-12 h-12 rounded-lg bg-zinc-800 border-zinc-700 border flex items-center justify-center">
-                                                        <Globe className="h-6 w-6 text-blue-400" />
-                                                    </div>
-                                                    <span className="text-xs text-zinc-500">Source</span>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xl font-semibold text-white">Live Architecture Monitor</h3>
+                                        <div className="flex gap-2">
+                                            <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-[10px] text-green-400 font-mono uppercase tracking-wider">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                                System Online
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* LIVE MONITOR VISUALIZATION */}
+                                    <div className="bg-[#09090b] rounded-xl border border-white/10 relative overflow-hidden group shadow-2xl">
+                                        {/* Background Grid */}
+                                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent"></div>
+
+                                        <div className="p-8 relative z-10">
+                                            {/* Flow Diagram */}
+                                            <div className="flex items-center justify-between gap-4 mb-8 relative">
+                                                {/* Connecting Line - Background */}
+                                                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-zinc-800 -z-10"></div>
+
+                                                {/* Animated Data Packets */}
+                                                <div className="absolute top-1/2 left-0 w-full h-0.5 -z-10 overflow-hidden">
+                                                    <div className="absolute top-0 left-0 h-full w-20 bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-[pipeline-flow_2s_linear_infinite]"></div>
+                                                    <div className="absolute top-0 left-0 h-full w-20 bg-gradient-to-r from-transparent via-green-500 to-transparent animate-[pipeline-flow_2s_linear_infinite_1s]"></div>
                                                 </div>
-                                                <div className="w-12 h-0.5 bg-zinc-700"></div>
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <div className="w-12 h-12 rounded-lg bg-zinc-800 border-zinc-700 border flex items-center justify-center">
-                                                        <Box className="h-6 w-6 text-yellow-400" />
+
+                                                {/* Node 1: Source */}
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="relative group/node">
+                                                        <div className="w-16 h-16 rounded-2xl bg-[#18181b] border border-blue-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.2)] z-10 relative">
+                                                            <Globe className="h-8 w-8 text-blue-400 group-hover/node:scale-110 transition-transform" />
+                                                            {/* Pulse Ring */}
+                                                            <div className="absolute inset-0 rounded-2xl border border-blue-500/50 animate-ping opacity-20"></div>
+                                                        </div>
+                                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-8 bg-blue-500/20 blur-xl rounded-full"></div>
                                                     </div>
-                                                    <span className="text-xs text-zinc-500">Process</span>
+                                                    <div className="text-center">
+                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">Salesforce</div>
+                                                        <div className="text-[10px] text-zinc-500">Source System</div>
+                                                    </div>
                                                 </div>
-                                                <div className="w-12 h-0.5 bg-zinc-700"></div>
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <div className="w-12 h-12 rounded-lg bg-zinc-800 border-zinc-700 border flex items-center justify-center">
-                                                        <Database className="h-6 w-6 text-green-400" />
+
+                                                {/* Node 2: Process (Mule) */}
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="relative group/node">
+                                                        <div className="w-20 h-20 rounded-full bg-[#18181b] border border-purple-500/30 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.2)] z-10 relative">
+                                                            <Box className="h-10 w-10 text-purple-400 animate-[spin_10s_linear_infinite]" />
+                                                        </div>
+                                                        {/* Orbiting Particles */}
+                                                        <div className="absolute inset-[-10px] border border-white/5 rounded-full animate-[spin_4s_linear_infinite]">
+                                                            <div className="absolute top-0 left-1/2 h-1.5 w-1.5 bg-purple-500 rounded-full -translate-x-1/2 shadow-[0_0_10px_purple]"></div>
+                                                        </div>
                                                     </div>
-                                                    <span className="text-xs text-zinc-500">Target</span>
+                                                    <div className="text-center">
+                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">MuleSoft Core</div>
+                                                        <div className="text-[10px] text-zinc-500">Transform & Route</div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Node 3: Target */}
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="relative group/node">
+                                                        <div className="w-16 h-16 rounded-2xl bg-[#18181b] border border-green-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.2)] z-10 relative">
+                                                            <Database className="h-8 w-8 text-green-400 group-hover/node:scale-110 transition-transform" />
+                                                        </div>
+                                                        <div className="absolute -right-2 -top-2 bg-green-500 rounded-full p-1 animate-bounce">
+                                                            <Check className="h-3 w-3 text-black" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">SAP HANA</div>
+                                                        <div className="text-[10px] text-zinc-500">Target DB</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Simulated Terminal & Metrics */}
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <div className="col-span-2 bg-black/50 rounded-lg p-3 font-mono text-[10px] leading-relaxed text-zinc-400 border border-white/5 h-24 overflow-hidden relative">
+                                                    <div className="absolute top-2 right-2 flex gap-1">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500/20"></div>
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/20"></div>
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                    </div>
+                                                    <div className="animate-[scrollUp_5s_linear_infinite]">
+                                                        <span className="text-blue-400">[INFO]</span> Polling Salesforce Object 'Account'...<br />
+                                                        <span className="text-blue-400">[INFO]</span> Retrieved 10 records. Watermark updated.<br />
+                                                        <span className="text-purple-400">[PROCESS]</span> Payload transformation executing...<br />
+                                                        <span className="text-green-400">[SUCCESS]</span> Batch step 1 completed (10/10)<br />
+                                                        <span className="text-blue-400">[INFO]</span> Upserting to SAP S/4HANA...<br />
+                                                        <span className="text-green-400">[SUCCESS]</span> Flow completed in 124ms.
+                                                    </div>
+                                                    <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-black to-transparent"></div>
+                                                </div>
+                                                <div className="col-span-1 space-y-2">
+                                                    <div className="bg-zinc-900/50 rounded p-2 border border-white/5">
+                                                        <div className="text-[10px] text-zinc-500 uppercase">Latency</div>
+                                                        <div className="text-lg font-bold text-white font-mono">124<span className="text-xs text-zinc-500 ml-0.5">ms</span></div>
+                                                    </div>
+                                                    <div className="bg-zinc-900/50 rounded p-2 border border-white/5">
+                                                        <div className="text-[10px] text-zinc-500 uppercase">Success Rate</div>
+                                                        <div className="text-lg font-bold text-green-400 font-mono">100<span className="text-xs text-zinc-500 ml-0.5">%</span></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <style jsx>{`
+                                        @keyframes pipeline-flow {
+                                            0% { left: 0; opacity: 0; }
+                                            10% { opacity: 1; }
+                                            90% { opacity: 1; }
+                                            100% { left: 100%; opacity: 0; }
+                                        }
+                                        @keyframes scrollUp {
+                                            0% { transform: translateY(0); }
+                                            100% { transform: translateY(-50%); }
+                                        }
+                                    `}</style>
                                 </section>
 
                                 <section>
-                                    <h3 className="text-xl font-semibold mb-4 text-white">How it works</h3>
-                                    <div className="prose prose-invert max-w-none text-zinc-400">
+                                    <h3 className="text-xl font-semibold mb-4 text-white">Logic Breakdown</h3>
+                                    <div className="prose prose-invert max-w-none text-zinc-400 leading-relaxed">
                                         <p>
-                                            This template provides a standard implementation for synchronizing data between two systems.
-                                            It is designed to be highly reliable and scalable.
+                                            This template orchestrates a reliable Oneway Sync pattern. It uses an <strong className="text-white">Idempotent Receiver</strong> to ensure no duplicates are processed, even if the source system fires multiple events.
                                         </p>
-                                        <ul className="list-disc pl-5 space-y-2 mt-4">
-                                            <li><strong>Watermarking:</strong> Automatically tracks the last processed record timestamp to ensure incremental updates.</li>
-                                            <li><strong>Batch Processing:</strong> Uses MuleSoft Batch Scope to process records in blocks of 100, optimizing API limits.</li>
-                                            <li><strong>Error Handling:</strong> Records that fail to sync are logged to a separate error queue for manual intervention.</li>
-                                        </ul>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 not-prose">
+                                            <div className="p-4 rounded-lg bg-zinc-900/40 border border-white/5">
+                                                <h4 className="font-semibold text-white text-sm mb-2 flex items-center gap-2">
+                                                    <Database className="h-4 w-4 text-blue-400" /> Watermarking
+                                                </h4>
+                                                <p className="text-xs text-zinc-400">Automatically tracks the `LastModifiedDate` to fetch only new/updated records.</p>
+                                            </div>
+                                            <div className="p-4 rounded-lg bg-zinc-900/40 border border-white/5">
+                                                <h4 className="font-semibold text-white text-sm mb-2 flex items-center gap-2">
+                                                    <Shield className="h-4 w-4 text-green-400" /> Error Handling
+                                                </h4>
+                                                <p className="text-xs text-zinc-400">Failed records are routed to a DLQ (Dead Letter Queue) for manual retry.</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </section>
                             </div>
 
                             <div className="space-y-6">
                                 <div className="bg-card/50 border border-border rounded-xl p-6">
-                                    <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Prerequisites</h4>
+                                    <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Required Connectors</h4>
                                     <ul className="space-y-3">
-                                        <li className="flex items-start gap-3 text-sm text-foreground">
-                                            <Check className="h-4 w-4 text-green-500 mt-0.5" />
-                                            <span>Mule Runtime 4.4.0+</span>
+                                        <li className="flex items-center justify-between text-sm text-foreground p-2 rounded hover:bg-white/5 transition-colors">
+                                            <span className="flex items-center gap-3"><Cloud className="h-4 w-4 text-blue-400" /> Salesforce</span>
+                                            <span className="text-xs font-mono text-zinc-500">v10.13</span>
                                         </li>
-                                        <li className="flex items-start gap-3 text-sm text-foreground">
-                                            <Check className="h-4 w-4 text-green-500 mt-0.5" />
-                                            <span>Salesforce Connector 10.13.0</span>
+                                        <li className="flex items-center justify-between text-sm text-foreground p-2 rounded hover:bg-white/5 transition-colors">
+                                            <span className="flex items-center gap-3"><Database className="h-4 w-4 text-indigo-400" /> SAP S/4HANA</span>
+                                            <span className="text-xs font-mono text-zinc-500">v5.5.0</span>
                                         </li>
-                                        <li className="flex items-start gap-3 text-sm text-foreground">
-                                            <Check className="h-4 w-4 text-green-500 mt-0.5" />
-                                            <span>SAP Connector 5.5.0</span>
+                                        <li className="flex items-center justify-between text-sm text-foreground p-2 rounded hover:bg-white/5 transition-colors">
+                                            <span className="flex items-center gap-3"><Shield className="h-4 w-4 text-green-400" /> Secure Props</span>
+                                            <span className="text-xs font-mono text-zinc-500">v1.2.5</span>
                                         </li>
                                     </ul>
                                 </div>
 
-                                <div className="bg-card/50 border border-border rounded-xl p-6">
-                                    <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Deployment</h4>
+                                <div className="bg-gradient-to-br from-blue-600/10 to-purple-600/10 border border-blue-500/20 rounded-xl p-6">
+                                    <h4 className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-4">Ready to Run?</h4>
                                     <div className="flex flex-col gap-3">
-                                        <button className="w-full py-2 px-4 rounded bg-white text-black font-medium hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 text-sm">
+                                        <button className="w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm">
                                             <Cloud className="h-4 w-4" />
                                             Deploy to CloudHub
                                         </button>
-                                        <button className="w-full py-2 px-4 rounded border border-zinc-700 text-white font-medium hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 text-sm">
-                                            <Terminal className="h-4 w-4" />
+                                        <button className="w-full py-3 px-4 rounded-lg bg-[#18181b] border border-white/10 text-zinc-300 font-medium hover:bg-zinc-800 hover:text-white transition-all flex items-center justify-center gap-2 text-sm group">
+                                            <Terminal className="h-4 w-4 group-hover:text-green-400 transition-colors" />
                                             Copy CLI Command
                                         </button>
                                     </div>
