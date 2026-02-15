@@ -4,7 +4,7 @@ import { use } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { POCS } from "@/data/pocs";
-import { ArrowLeft, Box, Code, Copy, Check, Download, GitBranch, Globe, Layers, Star, Terminal, Share2, Calendar, User, Shield, Database, Cloud, FileText } from "lucide-react";
+import { ArrowLeft, Download, GitBranch, Share2, Star, User, Copy, Check, Terminal, Cloud, List } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -16,6 +16,7 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
 
     const handleCopy = () => {
         setCopied(true);
+        navigator.clipboard.writeText(poc?.details?.dataWeave?.code || "");
         setTimeout(() => setCopied(false), 2000);
     };
 
@@ -32,6 +33,9 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
             </div>
         );
     }
+
+    // Safe access to details (in case older data exists, though we updated all)
+    const details = poc.details;
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -135,7 +139,7 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
 
                 {/* Tab Content */}
                 <div className="container px-4 mx-auto min-h-[500px]">
-                    {activeTab === 'overview' && (
+                    {activeTab === 'overview' && details && (
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="lg:col-span-2 space-y-8">
                                 <section>
@@ -170,16 +174,14 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                                                 {/* Node 1: Source */}
                                                 <div className="flex flex-col items-center gap-3">
                                                     <div className="relative group/node">
-                                                        <div className="w-16 h-16 rounded-2xl bg-[#18181b] border border-blue-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.2)] z-10 relative">
-                                                            <Globe className="h-8 w-8 text-blue-400 group-hover/node:scale-110 transition-transform" />
-                                                            {/* Pulse Ring */}
-                                                            <div className="absolute inset-0 rounded-2xl border border-blue-500/50 animate-ping opacity-20"></div>
+                                                        <div className={`w-16 h-16 rounded-2xl bg-[#18181b] flex items-center justify-center z-10 relative border ${details.architecture.source.color === 'blue' ? 'border-blue-500/30' : 'border-zinc-500/30'} shadow-lg`}>
+                                                            <details.architecture.source.icon className={`h-8 w-8 ${details.architecture.source.color === 'blue' ? 'text-blue-400' : 'text-zinc-400'} group-hover/node:scale-110 transition-transform`} />
                                                         </div>
-                                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-8 bg-blue-500/20 blur-xl rounded-full"></div>
+                                                        <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-8 blur-xl rounded-full ${details.architecture.source.color === 'blue' ? 'bg-blue-500/20' : 'bg-white/10'}`}></div>
                                                     </div>
                                                     <div className="text-center">
-                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">Salesforce</div>
-                                                        <div className="text-[10px] text-zinc-500">Source System</div>
+                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">{details.architecture.source.name}</div>
+                                                        <div className="text-[10px] text-zinc-500">{details.architecture.source.type}</div>
                                                     </div>
                                                 </div>
 
@@ -187,7 +189,7 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                                                 <div className="flex flex-col items-center gap-3">
                                                     <div className="relative group/node">
                                                         <div className="w-20 h-20 rounded-full bg-[#18181b] border border-purple-500/30 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.2)] z-10 relative">
-                                                            <Box className="h-10 w-10 text-purple-400 animate-[spin_10s_linear_infinite]" />
+                                                            <details.architecture.process.icon className="h-10 w-10 text-purple-400 animate-[spin_10s_linear_infinite]" />
                                                         </div>
                                                         {/* Orbiting Particles */}
                                                         <div className="absolute inset-[-10px] border border-white/5 rounded-full animate-[spin_4s_linear_infinite]">
@@ -195,24 +197,24 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                                                         </div>
                                                     </div>
                                                     <div className="text-center">
-                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">MuleSoft Core</div>
-                                                        <div className="text-[10px] text-zinc-500">Transform & Route</div>
+                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">{details.architecture.process.name}</div>
+                                                        <div className="text-[10px] text-zinc-500">{details.architecture.process.type}</div>
                                                     </div>
                                                 </div>
 
                                                 {/* Node 3: Target */}
                                                 <div className="flex flex-col items-center gap-3">
                                                     <div className="relative group/node">
-                                                        <div className="w-16 h-16 rounded-2xl bg-[#18181b] border border-green-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.2)] z-10 relative">
-                                                            <Database className="h-8 w-8 text-green-400 group-hover/node:scale-110 transition-transform" />
+                                                        <div className={`w-16 h-16 rounded-2xl bg-[#18181b] flex items-center justify-center z-10 relative border ${details.architecture.target.color === 'green' ? 'border-green-500/30' : 'border-zinc-500/30'}`}>
+                                                            <details.architecture.target.icon className={`h-8 w-8 ${details.architecture.target.color === 'green' ? 'text-green-400' : 'text-zinc-400'} group-hover/node:scale-110 transition-transform`} />
                                                         </div>
                                                         <div className="absolute -right-2 -top-2 bg-green-500 rounded-full p-1 animate-bounce">
                                                             <Check className="h-3 w-3 text-black" />
                                                         </div>
                                                     </div>
                                                     <div className="text-center">
-                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">SAP HANA</div>
-                                                        <div className="text-[10px] text-zinc-500">Target DB</div>
+                                                        <div className="text-xs font-bold text-white uppercase tracking-wider">{details.architecture.target.name}</div>
+                                                        <div className="text-[10px] text-zinc-500">{details.architecture.target.type}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -226,24 +228,25 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
                                                     </div>
                                                     <div className="animate-[scrollUp_5s_linear_infinite]">
-                                                        <span className="text-blue-400">[INFO]</span> Polling Salesforce Object 'Account'...<br />
-                                                        <span className="text-blue-400">[INFO]</span> Retrieved 10 records. Watermark updated.<br />
-                                                        <span className="text-purple-400">[PROCESS]</span> Payload transformation executing...<br />
-                                                        <span className="text-green-400">[SUCCESS]</span> Batch step 1 completed (10/10)<br />
-                                                        <span className="text-blue-400">[INFO]</span> Upserting to SAP S/4HANA...<br />
-                                                        <span className="text-green-400">[SUCCESS]</span> Flow completed in 124ms.
+                                                        {details.simulation.logs.map((log, i) => (
+                                                            <div key={i}>
+                                                                <span className={`${log.color === 'blue' ? 'text-blue-400' : log.color === 'green' ? 'text-green-400' : log.color === 'red' ? 'text-red-400' : log.color === 'purple' ? 'text-purple-400' : 'text-yellow-400'}`}>
+                                                                    [{log.level}]
+                                                                </span> {log.text}
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                     <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-black to-transparent"></div>
                                                 </div>
                                                 <div className="col-span-1 space-y-2">
-                                                    <div className="bg-zinc-900/50 rounded p-2 border border-white/5">
-                                                        <div className="text-[10px] text-zinc-500 uppercase">Latency</div>
-                                                        <div className="text-lg font-bold text-white font-mono">124<span className="text-xs text-zinc-500 ml-0.5">ms</span></div>
-                                                    </div>
-                                                    <div className="bg-zinc-900/50 rounded p-2 border border-white/5">
-                                                        <div className="text-[10px] text-zinc-500 uppercase">Success Rate</div>
-                                                        <div className="text-lg font-bold text-green-400 font-mono">100<span className="text-xs text-zinc-500 ml-0.5">%</span></div>
-                                                    </div>
+                                                    {details.simulation.metrics.map((metric, i) => (
+                                                        <div key={i} className="bg-zinc-900/50 rounded p-2 border border-white/5">
+                                                            <div className="text-[10px] text-zinc-500 uppercase">{metric.label}</div>
+                                                            <div className={`text-lg font-bold font-mono ${metric.color === 'green' ? 'text-green-400' : metric.color === 'blue' ? 'text-blue-400' : 'text-white'}`}>
+                                                                {metric.value}<span className="text-xs text-zinc-500 ml-0.5">{metric.unit}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
@@ -266,21 +269,18 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                                     <h3 className="text-xl font-semibold mb-4 text-white">Logic Breakdown</h3>
                                     <div className="prose prose-invert max-w-none text-zinc-400 leading-relaxed">
                                         <p>
-                                            This template orchestrates a reliable Oneway Sync pattern. It uses an <strong className="text-white">Idempotent Receiver</strong> to ensure no duplicates are processed, even if the source system fires multiple events.
+                                            {details.logicBreakdown.text}
                                         </p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 not-prose">
-                                            <div className="p-4 rounded-lg bg-zinc-900/40 border border-white/5">
-                                                <h4 className="font-semibold text-white text-sm mb-2 flex items-center gap-2">
-                                                    <Database className="h-4 w-4 text-blue-400" /> Watermarking
-                                                </h4>
-                                                <p className="text-xs text-zinc-400">Automatically tracks the `LastModifiedDate` to fetch only new/updated records.</p>
-                                            </div>
-                                            <div className="p-4 rounded-lg bg-zinc-900/40 border border-white/5">
-                                                <h4 className="font-semibold text-white text-sm mb-2 flex items-center gap-2">
-                                                    <Shield className="h-4 w-4 text-green-400" /> Error Handling
-                                                </h4>
-                                                <p className="text-xs text-zinc-400">Failed records are routed to a DLQ (Dead Letter Queue) for manual retry.</p>
-                                            </div>
+                                            {details.logicBreakdown.cards.map((card, i) => (
+                                                <div key={i} className="p-4 rounded-lg bg-zinc-900/40 border border-white/5">
+                                                    <h4 className="font-semibold text-white text-sm mb-2 flex items-center gap-2">
+                                                        <card.icon className={`h-4 w-4 ${card.color === 'blue' ? 'text-blue-400' : card.color === 'green' ? 'text-green-400' : 'text-purple-400'}`} />
+                                                        {card.title}
+                                                    </h4>
+                                                    <p className="text-xs text-zinc-400">{card.text}</p>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </section>
@@ -290,18 +290,15 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                                 <div className="bg-card/50 border border-border rounded-xl p-6">
                                     <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Required Connectors</h4>
                                     <ul className="space-y-3">
-                                        <li className="flex items-center justify-between text-sm text-foreground p-2 rounded hover:bg-white/5 transition-colors">
-                                            <span className="flex items-center gap-3"><Cloud className="h-4 w-4 text-blue-400" /> Salesforce</span>
-                                            <span className="text-xs font-mono text-zinc-500">v10.13</span>
-                                        </li>
-                                        <li className="flex items-center justify-between text-sm text-foreground p-2 rounded hover:bg-white/5 transition-colors">
-                                            <span className="flex items-center gap-3"><Database className="h-4 w-4 text-indigo-400" /> SAP S/4HANA</span>
-                                            <span className="text-xs font-mono text-zinc-500">v5.5.0</span>
-                                        </li>
-                                        <li className="flex items-center justify-between text-sm text-foreground p-2 rounded hover:bg-white/5 transition-colors">
-                                            <span className="flex items-center gap-3"><Shield className="h-4 w-4 text-green-400" /> Secure Props</span>
-                                            <span className="text-xs font-mono text-zinc-500">v1.2.5</span>
-                                        </li>
+                                        {details.connectors.map((connector, i) => (
+                                            <li key={i} className="flex items-center justify-between text-sm text-foreground p-2 rounded hover:bg-white/5 transition-colors">
+                                                <span className="flex items-center gap-3">
+                                                    <connector.icon className={`h-4 w-4 ${connector.color === 'blue' ? 'text-blue-400' : connector.color === 'indigo' ? 'text-indigo-400' : 'text-green-400'}`} />
+                                                    {connector.name}
+                                                </span>
+                                                <span className="text-xs font-mono text-zinc-500">v{connector.version}</span>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
 
@@ -322,13 +319,13 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                         </div>
                     )}
 
-                    {activeTab === 'dataweave' && (
+                    {activeTab === 'dataweave' && details?.dataWeave && (
                         <div className="animate-in fade-in duration-300">
                             <div className="bg-[#1e1e2e] rounded-lg border border-white/5 overflow-hidden">
                                 <div className="flex items-center justify-between px-4 py-3 bg-[#252535] border-b border-white/5">
                                     <div className="flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-blue-400" />
-                                        <span className="text-sm text-zinc-300 font-mono">transform_payload.dwl</span>
+                                        <div className="h-4 w-4 text-blue-400">DW</div>
+                                        <span className="text-sm text-zinc-300 font-mono">{details.dataWeave.fileName}</span>
                                     </div>
                                     <button
                                         onClick={handleCopy}
@@ -340,26 +337,7 @@ export default function POCDetailPage({ params }: { params: Promise<{ id: string
                                 </div>
                                 <div className="p-6 overflow-auto text-sm font-mono text-blue-100 leading-relaxed">
                                     <pre>
-                                        {`%dw 2.0
-output application/json
----
-payload map (item, index) -> {
-    id: item.SAP_ID,
-    fullName: (item.FirstName ++ " " ++ item.LastName),
-    email: item.EmailAddress,
-    status: if (item.Active == "X") "Active" else "Inactive",
-    address: {
-        street: item.Street,
-        city: item.City,
-        zip: item.PostalCode,
-        country: item.CountryCode
-    },
-    meta: {
-        source: "SAP_S4HANA",
-        timestamp: now(),
-        correlationId: correlationId
-    }
-}`}
+                                        {details.dataWeave.code}
                                     </pre>
                                 </div>
                             </div>
@@ -368,7 +346,9 @@ payload map (item, index) -> {
 
                     {activeTab === 'flow-design' && (
                         <div className="flex flex-col items-center justify-center py-20 bg-card/50 border border-border rounded-xl text-center animate-in fade-in duration-300">
-                            <Layers className="h-16 w-16 text-zinc-700 mb-6" />
+                            <div className="h-16 w-16 text-zinc-700 mb-6 border border-zinc-700 rounded-lg flex items-center justify-center">
+                                <GitBranch className="h-8 w-8" />
+                            </div>
                             <h3 className="text-xl font-semibold mb-2">Interactive Flow View</h3>
                             <p className="text-muted-foreground max-w-md mb-8">
                                 The interactive flow designer is optimized for desktop. Please download the project to view and edit the full flow in Anypoint Studio.
@@ -379,7 +359,7 @@ payload map (item, index) -> {
                         </div>
                     )}
 
-                    {activeTab === 'dependencies' && (
+                    {activeTab === 'dependencies' && details?.dependencies && (
                         <div className="bg-card/50 border border-border rounded-xl overflow-hidden animate-in fade-in duration-300">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-zinc-900/50 text-muted-foreground font-medium border-b border-border">
@@ -391,12 +371,7 @@ payload map (item, index) -> {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
-                                    {[
-                                        { name: "Mule HTTP Connector", group: "org.mule.connectors", version: "1.7.3", scope: "Compile" },
-                                        { name: "Mule Sockets Connector", group: "org.mule.connectors", version: "1.2.2", scope: "Compile" },
-                                        { name: "Mule Secure Configuration Property", group: "com.mulesoft.modules", version: "1.2.5", scope: "Compile" },
-                                        { name: "Mule Validation Module", group: "org.mule.modules", version: "2.0.1", scope: "Test" }
-                                    ].map((dep, i) => (
+                                    {details.dependencies.map((dep, i) => (
                                         <tr key={i} className="hover:bg-zinc-800/50 transition-colors">
                                             <td className="px-6 py-4 font-medium text-foreground">{dep.name}</td>
                                             <td className="px-6 py-4 text-muted-foreground">{dep.group}</td>
@@ -406,16 +381,15 @@ payload map (item, index) -> {
                                     ))}
                                 </tbody>
                             </table>
+                            {details.dependencies.length === 0 && (
+                                <div className="p-8 text-center text-zinc-500">No external dependencies listed for this POC.</div>
+                            )}
                         </div>
                     )}
 
-                    {activeTab === 'changelog' && (
+                    {activeTab === 'changelog' && details?.changelog && (
                         <div className="space-y-8 max-w-3xl mx-auto animate-in fade-in duration-300 py-8">
-                            {[
-                                { version: "1.2.0", date: "Oct 24, 2024", changes: ["Added Watermarking logic for incremental sync", "Updated Salesforce Connector to v10.15"] },
-                                { version: "1.1.0", date: "Sep 12, 2024", changes: ["Fixed bug in Batch Aggregator size", "Added centralized error logging"] },
-                                { version: "1.0.0", date: "Aug 01, 2024", changes: ["Initial Release", "Basic sync functionality"] }
-                            ].map((release, i) => (
+                            {details.changelog.map((release, i) => (
                                 <div key={i} className="relative pl-8 border-l border-zinc-800 pb-8 last:pb-0">
                                     <div className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full bg-blue-500 ring-4 ring-background"></div>
                                     <div className="flex items-center gap-4 mb-2">

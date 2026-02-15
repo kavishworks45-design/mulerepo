@@ -2,8 +2,10 @@
 import Link from "next/link";
 import { ArrowRight, Clock, ShieldCheck, Zap, Database, ArrowUpRight, CheckCircle2, XCircle, Terminal, Layers, Lock, Gauge, Code2, Rocket } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export function Hero() {
+    const { user } = useAuth();
     const [elapsed, setElapsed] = useState(0);
     const [activeFeature, setActiveFeature] = useState(0);
     const cardRef = useRef<HTMLDivElement>(null);
@@ -302,7 +304,7 @@ export function Hero() {
                         Stop building from scratch. Access a curated repository of production-grade templates and integrations designed by Architects.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 relative z-50">
                         <Link href="/browse" className="relative inline-flex items-center justify-center rounded-md bg-white text-black px-8 py-3 text-sm font-medium shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:bg-gray-200 hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] hover:scale-105 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-white dark:text-black overflow-hidden group">
                             <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>
                             <span className="relative z-10 flex items-center">
@@ -310,9 +312,15 @@ export function Hero() {
                                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                             </span>
                         </Link>
-                        <a href="#contribute" className="inline-flex items-center justify-center rounded-md border border-input bg-transparent px-8 py-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:border-white/20">
-                            Contribute
-                        </a>
+                        {user ? (
+                            <Link href="/dashboard" className="inline-flex items-center justify-center rounded-md border border-input bg-transparent px-8 py-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:border-white/20">
+                                My Dashboard
+                            </Link>
+                        ) : (
+                            <Link href="/login" className="inline-flex items-center justify-center rounded-md border border-input bg-transparent px-8 py-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:border-white/20">
+                                Contribute
+                            </Link>
+                        )}
                     </div>
 
                     {/* Deep Space Parallax Card */}
