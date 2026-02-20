@@ -1,72 +1,68 @@
 import { GoogleGenAI } from "@google/genai";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyCk-sgzVjTnCO1eahw-2tLQaKkEycbZNJA";
 
-if (!GEMINI_API_KEY) {
-  console.warn("GEMINI_API_KEY is not defined. AI features will be disabled.");
-}
-
-const ai = new GoogleGenAI(GEMINI_API_KEY ? { apiKey: GEMINI_API_KEY } : {});
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export interface AIAnalysisResult {
-  description: string;
-  architecture: {
-    source: { name: string; type: string; icon: string; color: string };
-    process: { name: string; type: string; icon: string; color: string };
-    target: { name: string; type: string; icon: string; color: string };
-  };
-  logicBreakdown: {
-    cards: Array<{
-      title: string;
-      type: string;
-      description: string;
-      color: string;
-    }>;
-  };
-  dependencies: Array<{ name: string; version: string; type: string }>;
-  tags: string[];
-  documentation?: string;
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
+    description: string;
+    architecture: {
+        source: { name: string; type: string; icon: string; color: string };
+        process: { name: string; type: string; icon: string; color: string };
+        target: { name: string; type: string; icon: string; color: string };
+    };
+    logicBreakdown: {
+        cards: Array<{
+            title: string;
+            type: string;
+            description: string;
+            color: string;
+        }>;
+    };
+    dependencies: Array<{ name: string; version: string; type: string }>;
+    tags: string[];
+    documentation?: string;
+    difficulty: "Beginner" | "Intermediate" | "Advanced";
 }
 
 export async function analyzeProject(
-  files: Record<string, string>,
+    files: Record<string, string>,
 ): Promise<AIAnalysisResult | null> {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    console.error("❌ GEMINI_API_KEY is missing from environment variables.");
-    return null;
-  }
-
-  try {
-    console.log("🤖 Starting Gemini Analysis...");
-
-    // Prepare the prompt content
-    let fileContext = "";
-    const fileNames = [];
-    for (const [path, content] of Object.entries(files)) {
-      // Only include relevant files to save tokens
-      if (
-        path.endsWith(".xml") ||
-        path.endsWith(".dwl") ||
-        path.endsWith("pom.xml")
-      ) {
-        fileNames.push(path);
-        fileContext += `\n--- FILE: ${path} ---\n${content.substring(0, 15000)}\n`;
-      }
+    const key = process.env.GEMINI_API_KEY || "AIzaSyCk-sgzVjTnCO1eahw-2tLQaKkEycbZNJA";
+    if (!key) {
+        console.error("❌ GEMINI_API_KEY is missing from environment variables.");
+        return null;
     }
 
-    console.log(
-      `📂 Analyzing ${fileNames.length} files:`,
-      fileNames.join(", "),
-    );
+    try {
+        console.log("🤖 Starting Gemini Analysis...");
 
-    if (!fileContext) {
-      console.warn("⚠️ No analyzeable code files found in the ZIP.");
-      return null;
-    }
+        // Prepare the prompt content
+        let fileContext = "";
+        const fileNames = [];
+        for (const [path, content] of Object.entries(files)) {
+            // Only include relevant files to save tokens
+            if (
+                path.endsWith(".xml") ||
+                path.endsWith(".dwl") ||
+                path.endsWith("pom.xml")
+            ) {
+                fileNames.push(path);
+                fileContext += `\n--- FILE: ${path} ---\n${content.substring(0, 15000)}\n`;
+            }
+        }
 
-    const prompt = `
+        console.log(
+            `📂 Analyzing ${fileNames.length} files:`,
+            fileNames.join(", "),
+        );
+
+        if (!fileContext) {
+            console.warn("⚠️ No analyzeable code files found in the ZIP.");
+            return null;
+        }
+
+        const prompt = `
             You are a Senior MuleSoft Architect. Analyze the following MuleSoft project code files and generate a structured JSON summary.
             
             Based on the XML flows, DataWeave scripts, and POM file, identify:
@@ -102,32 +98,32 @@ export async function analyzeProject(
             ${fileContext}
         `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: prompt,
-    });
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-pro",
+            contents: prompt,
+        });
 
-    let text = response.text;
+        let text = response.text;
 
-    // CLEANUP: Remove markdown code blocks if present
-    text =
-      text
-        ?.replace(/```json/g, "")
-        ?.replace(/```/g, "")
-        ?.trim() || "{}";
+        // CLEANUP: Remove markdown code blocks if present
+        text =
+            text
+                ?.replace(/```json/g, "")
+                ?.replace(/```/g, "")
+                ?.trim() || "{}";
 
-    console.log("✅ Gemini Response received. Length:", text.length);
+        console.log("✅ Gemini Response received. Length:", text.length);
 
-    try {
-      const data = JSON.parse(text);
-      console.log("✅ JSON Parsed Successfully");
-      return data as AIAnalysisResult;
-    } catch (jsonError) {
-      console.error("❌ Failed to parse Gemini JSON. Raw text:", text);
-      return null;
+        try {
+            const data = JSON.parse(text);
+            console.log("✅ JSON Parsed Successfully");
+            return data as AIAnalysisResult;
+        } catch (jsonError) {
+            console.error("❌ Failed to parse Gemini JSON. Raw text:", text);
+            return null;
+        }
+    } catch (error) {
+        console.error("❌ Gemini Analysis Failed:", error);
+        return null;
     }
-  } catch (error) {
-    console.error("❌ Gemini Analysis Failed:", error);
-    return null;
-  }
 }

@@ -7,15 +7,6 @@ export async function POST(req: NextRequest) {
   console.log("Received POC creation request");
 
   try {
-    // Check for GITHUB_TOKEN immediately to avoid partial processing
-    if (!process.env.GITHUB_TOKEN) {
-      console.error("❌ GITHUB_TOKEN is missing in production environment");
-      return NextResponse.json(
-        { error: "GitHub integration is not configured on the server." },
-        { status: 500 },
-      );
-    }
-
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const pomFile = formData.get("pomFile") as File | null;

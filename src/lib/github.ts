@@ -1,7 +1,7 @@
 import { Octokit } from "@octokit/rest";
 
 // Ensure environment variable is set
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "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";
 const MONOREPO_NAME = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
 
 /**
