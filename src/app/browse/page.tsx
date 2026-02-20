@@ -2,17 +2,44 @@
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Search, GitFork, Star, ArrowRight, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { Search, GitFork, Star, ArrowRight, ChevronDown, Box, Code, Cloud, Server, Database, Layers, Shield, Activity, Users, Mail, Folder, Smartphone, GitMerge, Lock, Zap, FileCode } from "lucide-react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { POCS } from "@/data/pocs";
+import { getAllPOCs } from "@/lib/pocs";
+
+const ICON_MAP: Record<string, any> = {
+    Box, Code, Cloud, Server, Database, Layers, Shield, Activity, Users, Mail, Folder, Smartphone, GitMerge, Lock, Zap, FileCode
+};
 
 export default function BrowsePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTag, setSelectedTag] = useState("All");
     const [sortBy, setSortBy] = useState("newest");
+    const [allPOCs, setAllPOCs] = useState(POCS);
 
-    const filteredPOCs = POCS.filter(poc => {
+    useEffect(() => {
+        const fetchRemote = async () => {
+            try {
+                const res = await fetch("/api/pocs/list");
+                const remote = await res.json();
+
+                // Keep icon mapping
+                const mappedRemote = remote.map((p: any) => ({
+                    ...p,
+                    icon: ICON_MAP[p.icon as string] || Box
+                }));
+
+                const combined = [...mappedRemote, ...POCS].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+                setAllPOCs(combined);
+            } catch (e) {
+                console.error("Failed to fetch remote POCs", e);
+            }
+        };
+        fetchRemote();
+    }, []);
+
+    const filteredPOCs = allPOCs.filter(poc => {
         const matchesSearch = poc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             poc.description.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesTag = selectedTag === "All" || poc.tags.includes(selectedTag);
@@ -22,7 +49,9 @@ export default function BrowsePage() {
         if (sortBy === "forks") return b.forks - a.forks;
         if (sortBy === "newest") {
             // Primitive sort based on string parsing for now, ideally use timestamps
-            const getDays = (str: string) => {
+            const getDays = (str: string | undefined) => {
+                if (!str) return 999;
+                if (str === "Just now") return 0;
                 if (str.includes("day")) return parseInt(str) || 1;
                 if (str.includes("week")) return (parseInt(str) || 1) * 7;
                 if (str.includes("month")) return (parseInt(str) || 1) * 30;
@@ -33,7 +62,7 @@ export default function BrowsePage() {
         return 0;
     });
 
-    const allTags = ["All", ...Array.from(new Set(POCS.flatMap(p => p.tags)))];
+    const allTags = ["All", ...Array.from(new Set(allPOCs.flatMap(p => p.tags)))];
 
     return (
         <div className="min-h-screen bg-background text-foreground bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-background to-background">

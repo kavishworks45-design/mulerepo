@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github, Twitter, Linkedin } from "lucide-react";
+import { Twitter, Linkedin } from "lucide-react";
 
 export function Footer() {
     return (
@@ -17,10 +17,6 @@ export function Footer() {
                     </div>
 
                     <div className="flex gap-6">
-                        <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                            <span className="sr-only">GitHub</span>
-                            <Github className="h-5 w-5" />
-                        </a>
                         <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                             <span className="sr-only">Twitter</span>
                             <Twitter className="h-5 w-5" />

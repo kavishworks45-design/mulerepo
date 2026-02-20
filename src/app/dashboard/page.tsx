@@ -26,12 +26,32 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { POCS } from "@/data/pocs";
+import { Toast, ToastType } from "@/components/ui/Toast";
 
 export default function DashboardPage() {
     const router = useRouter();
     const { user, loading } = useAuth();
     const [activeTab, setActiveTab] = useState("overview");
     const [localPocs, setLocalPocs] = useState<any[]>([]);
+
+    // Toast State
+    const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: ToastType }>({
+        isVisible: false,
+        message: "",
+        type: "info"
+    });
+
+    const showToast = (message: string, type: ToastType) => {
+        setToast({ isVisible: true, message, type });
+    };
+
+    // Modal State
+    const [deleteModal, setDeleteModal] = useState<{ isVisible: boolean; pocId: number | null; pocTitle: string; isDeleting: boolean }>({
+        isVisible: false,
+        pocId: null,
+        pocTitle: "",
+        isDeleting: false
+    });
 
     useEffect(() => {
         if (!loading && !user) {
@@ -40,22 +60,65 @@ export default function DashboardPage() {
     }, [user, loading, router]);
 
     // Load any user-created POCs from localStorage
+    // Load user POCs from GitHub Catalog (via API)
     useEffect(() => {
-        const saved = localStorage.getItem('user_pocs');
-        if (saved) {
-            try {
-                setLocalPocs(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse user_pocs", e);
-            }
-        }
-    }, []);
+        const fetchPocs = async () => {
+            if (user) {
+                try {
+                    const res = await fetch("/api/pocs/list");
+                    const allPocs = await res.json();
 
-    const handleDelete = (id: number) => {
-        if (confirm("Are you sure you want to delete this POC?")) {
-            const updatedPocs = localPocs.filter(p => p.id !== id);
-            setLocalPocs(updatedPocs);
-            localStorage.setItem('user_pocs', JSON.stringify(updatedPocs));
+                    // Filter for my POCs
+                    const myPocs = allPocs.filter((p: any) => p.authorId === user.uid);
+                    setLocalPocs(myPocs);
+                } catch (e) {
+                    console.error("Failed to fetch user POCs", e);
+                }
+            }
+        };
+        fetchPocs();
+    }, [user]);
+
+    const handleDeleteClick = (id: number) => {
+        const pocToDelete = localPocs.find(p => p.id === id);
+        if (!pocToDelete || !pocToDelete.folderName) {
+            showToast("Could not find folder info for this POC.", "error");
+            return;
+        }
+
+        setDeleteModal({
+            isVisible: true,
+            pocId: id,
+            pocTitle: pocToDelete.title,
+            isDeleting: false
+        });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.pocId) return;
+
+        const pocToDelete = localPocs.find(p => p.id === deleteModal.pocId);
+        if (!pocToDelete || !pocToDelete.folderName) return;
+
+        setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+
+        try {
+            const res = await fetch(`/api/pocs/delete?folderName=${encodeURIComponent(pocToDelete.folderName)}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                setLocalPocs(prev => prev.filter(p => p.id !== deleteModal.pocId));
+                showToast(`Successfully deleted '${pocToDelete.title}'`, "success");
+            } else {
+                const data = await res.json();
+                showToast(`Error deleting POC: ${data.error}`, "error");
+            }
+        } catch (err) {
+            console.error("Failed to delete POC", err);
+            showToast("An error occurred while deleting the POC.", "error");
+        } finally {
+            setDeleteModal({ isVisible: false, pocId: null, pocTitle: "", isDeleting: false });
         }
     };
 
@@ -89,10 +152,37 @@ export default function DashboardPage() {
         isLocal: false
     }));
 
-    const mypocs = [
-        ...localPocs.map(p => ({ ...p, isLocal: true })),
+    const timeAgo = (dateStr: string) => {
+        if (!dateStr || dateStr === "Unknown") return "Unknown";
+        const date = new Date(dateStr);
+        const now = new Date();
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (seconds < 60) return "Just now";
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " mins ago";
+        return Math.floor(seconds) + " seconds ago";
+    };
+
+    const combined = [
+        ...localPocs.map(p => ({
+            ...p,
+            isLocal: true,
+            status: "Published", // GitHub POCs are considered Live/Published
+            authorName: p.authorName || user.displayName || "Me" // Show author
+        })),
         ...staticPocs
     ];
+    // Deduplicate by ID
+    const mypocs = combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
 
     return (
         <div className="min-h-screen bg-background text-foreground bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-background to-background">
@@ -233,15 +323,17 @@ export default function DashboardPage() {
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <h3 className="font-semibold text-white truncate group-hover:text-blue-400 transition-colors">{poc.title}</h3>
-                                                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${poc.status === 'Live' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'}`}>
+                                                                <Link href={`/poc/${poc.id}`} className="block flex-1 min-w-0">
+                                                                    <h3 className="font-semibold text-white truncate hover:text-blue-400 transition-colors">{poc.title}</h3>
+                                                                </Link>
+                                                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${poc.status === 'Live' || poc.status === 'Published' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'}`}>
                                                                     {poc.status}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center gap-4 text-xs text-zinc-500">
-                                                                <span>Updated {poc.updated}</span>
+                                                                <span>Updated {timeAgo(poc.updated)}</span>
                                                                 <span>•</span>
-                                                                <span>{poc.views} views</span>
+                                                                <span className="text-zinc-400">by {poc.authorName || "MuleSoft"}</span>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -250,7 +342,7 @@ export default function DashboardPage() {
                                                             </Link>
                                                             {poc.isLocal && (
                                                                 <button
-                                                                    onClick={() => handleDelete(poc.id)}
+                                                                    onClick={() => handleDeleteClick(poc.id)}
                                                                     className="p-2 hover:bg-red-500/10 rounded-md text-zinc-400 hover:text-red-400 transition-all"
                                                                 >
                                                                     <Trash2 className="h-4 w-4" />
@@ -339,7 +431,7 @@ export default function DashboardPage() {
                                                     </div>
                                                     {poc.isLocal && (
                                                         <button
-                                                            onClick={() => handleDelete(poc.id)}
+                                                            onClick={() => handleDeleteClick(poc.id)}
                                                             className="text-zinc-500 hover:text-red-400 transition-colors p-1 opacity-0 group-hover:opacity-100"
                                                             title="Delete POC"
                                                         >
@@ -348,13 +440,18 @@ export default function DashboardPage() {
                                                     )}
                                                 </div>
 
-                                                <h3 className="font-bold text-white mb-2 truncate pr-2" title={poc.title}>{poc.title}</h3>
+                                                <Link href={`/poc/${poc.id}`} className="block mb-2">
+                                                    <h3 className="font-bold text-white truncate pr-2 hover:text-blue-400 transition-colors" title={poc.title}>{poc.title}</h3>
+                                                </Link>
 
-                                                <div className="flex items-center gap-2 mb-6">
-                                                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${poc.status === 'Live' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'}`}>
+                                                <div className="flex items-center gap-2 mb-6 flex-wrap">
+                                                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${poc.status === 'Live' || poc.status === 'Published' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'}`}>
                                                         {poc.status}
                                                     </span>
-                                                    <span className="text-xs text-zinc-500">• {poc.updated}</span>
+                                                    <span className="text-xs text-zinc-500 flex items-center gap-1" title={poc.updated}>
+                                                        <span>• {timeAgo(poc.updated)}</span>
+                                                        <span>• by {poc.authorName}</span>
+                                                    </span>
                                                 </div>
                                             </div>
 
@@ -461,6 +558,70 @@ export default function DashboardPage() {
                     </div>
                 </main>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteModal.isVisible && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-zinc-950/80 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-[0_0_80px_rgba(220,38,38,0.15)] relative overflow-hidden">
+                        {/* Subtle top red glow */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-red-500/20 blur-[60px] pointer-events-none"></div>
+
+                        <div className="flex items-center gap-4 mb-6 relative z-10">
+                            <div className="h-12 w-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0 animate-pulse">
+                                <AlertCircle className="h-6 w-6 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white tracking-tight">Delete Contribution</h3>
+                                <p className="text-sm text-zinc-400 mt-0.5">This action cannot be undone.</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-black/40 border border-white/5 rounded-lg p-5 mb-8 relative z-10">
+                            <p className="text-zinc-300 text-sm leading-relaxed">
+                                Are you sure you want to permanently delete <strong className="text-white font-semibold block mt-1.5 text-base border-l-2 border-red-500 pl-2">{deleteModal.pocTitle}</strong>
+                            </p>
+                            <p className="text-xs text-zinc-500 mt-3 flex items-center gap-2">
+                                <AlertCircle className="h-3 w-3 text-yellow-500" />
+                                All files will be removed from the centralized repository.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-4 justify-end items-center relative z-10">
+                            <button
+                                onClick={() => setDeleteModal({ isVisible: false, pocId: null, pocTitle: "", isDeleting: false })}
+                                disabled={deleteModal.isDeleting}
+                                className="px-5 py-2.5 text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={deleteModal.isDeleting}
+                                className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:opacity-50 text-white rounded-lg text-sm font-medium shadow-lg shadow-red-900/50 hover:shadow-red-900/80 transition-all flex items-center justify-center gap-2 relative overflow-hidden"
+                            >
+                                {deleteModal.isDeleting ? (
+                                    <>
+                                        <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                        Deleting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="h-4 w-4 drop-shadow-md" />
+                                        Confirm Deletion
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <Toast
+                message={toast.message}
+                type={toast.type}
+                isVisible={toast.isVisible}
+                onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+            />
         </div>
     );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Github, Lock, Mail, AlertCircle } from "lucide-react"; // Added AlertCircle
+import { ArrowLeft, Lock, Mail, AlertCircle } from "lucide-react"; // Added AlertCircle
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, googleProvider } from "@/lib/firebase"; // Import Auth
@@ -44,7 +44,13 @@ export default function LoginPage() {
             router.push("/dashboard");
         } catch (err: any) {
             console.error("Google Login Error:", err);
-            setError("Failed to sign in with Google.");
+            if (err.code === 'auth/unauthorized-domain') {
+                setError("Domain not authorized. Add 'localhost' to Firebase Console > Auth > Settings > Authorized Domains.");
+            } else if (err.code === 'auth/popup-closed-by-user') {
+                setError("Sign-in cancelled.");
+            } else {
+                setError("Failed to sign in with Google.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -135,15 +141,11 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <button className="flex items-center justify-center gap-2 bg-zinc-900 border border-white/10 hover:bg-zinc-800 text-white py-2.5 rounded-lg transition-colors font-medium text-sm group" disabled>
-                            <Github className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
-                            GitHub
-                        </button>
+                    <div className="flex justify-center">
                         <button
                             onClick={handleGoogleLogin}
                             type="button"
-                            className="flex items-center justify-center gap-2 bg-zinc-900 border border-white/10 hover:bg-zinc-800 text-white py-2.5 rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                            className="w-full max-w-[200px] flex items-center justify-center gap-2 bg-zinc-900 border border-white/10 hover:bg-zinc-800 text-white py-2.5 rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
                             disabled={isLoading}
                         >
                             <svg className="h-4 w-4" viewBox="0 0 24 24">
