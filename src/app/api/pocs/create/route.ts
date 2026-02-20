@@ -7,6 +7,15 @@ export async function POST(req: NextRequest) {
   console.log("Received POC creation request");
 
   try {
+    // Check for GITHUB_TOKEN immediately to avoid partial processing
+    if (!process.env.GITHUB_TOKEN) {
+      console.error("❌ GITHUB_TOKEN is missing in production environment");
+      return NextResponse.json(
+        { error: "GitHub integration is not configured on the server." },
+        { status: 500 },
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const pomFile = formData.get("pomFile") as File | null;
@@ -99,13 +108,14 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with hyphens
       .replace(/^-+|-+$/g, ""); // Trim leading/trailing hyphens;
 
-    // 1. Analyze with Gemini (DISABLED for now)
+    // 1. Analyze with Gemini
     let aiAnalysis: any = {};
-    // try {
-    //     aiAnalysis = await analyzeProject(filesMap) || {};
-    // } catch (e) {
-    //     console.error("AI Analysis failed, proceeding with basic metadata:", e);
-    // }
+    try {
+      console.log("🤖 Running Gemini Analysis...");
+      aiAnalysis = (await analyzeProject(filesMap)) || {};
+    } catch (e) {
+      console.error("AI Analysis failed, proceeding with basic metadata:", e);
+    }
 
     // 2. Prepare Metadata (poc.json inside the folder)
     const pocMetadata = {
