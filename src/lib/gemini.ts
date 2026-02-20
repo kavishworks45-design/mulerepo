@@ -1,8 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyCk-sgzVjTnCO1eahw-2tLQaKkEycbZNJA";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const ai = new GoogleGenAI(GEMINI_API_KEY ? { apiKey: GEMINI_API_KEY } : {});
 
 export interface AIAnalysisResult {
     description: string;
@@ -28,7 +28,7 @@ export interface AIAnalysisResult {
 export async function analyzeProject(
     files: Record<string, string>,
 ): Promise<AIAnalysisResult | null> {
-    const key = process.env.GEMINI_API_KEY || "AIzaSyCk-sgzVjTnCO1eahw-2tLQaKkEycbZNJA";
+    const key = process.env.GEMINI_API_KEY;
     if (!key) {
         console.error("❌ GEMINI_API_KEY is missing from environment variables.");
         return null;

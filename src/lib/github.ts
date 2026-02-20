@@ -1,8 +1,8 @@
 import { Octokit } from "@octokit/rest";
 
 // Ensure environment variable is set
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "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";
-const MONOREPO_NAME = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const MONOREPO_NAME = process.env.GITHUB_MONOREPO_NAME; // Removed hardcoded fallback
 
 /**
  * Pushes files to a specific folder within a central repository.
@@ -19,6 +19,9 @@ export async function createRepoAndPush(
 ) {
   if (!GITHUB_TOKEN) {
     throw new Error("GITHUB_TOKEN is not defined in environment variables.");
+  }
+  if (!MONOREPO_NAME) {
+    throw new Error("GITHUB_MONOREPO_NAME is not defined in environment variables.");
   }
 
   const octokit = new Octokit({
