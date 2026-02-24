@@ -1,9 +1,5 @@
 import { Octokit } from "@octokit/rest";
 
-// Ensure environment variable is set
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const MONOREPO_NAME = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
-
 /**
  * Pushes files to a specific folder within a central repository.
  * If the repository doesn't exist, it creates it.
@@ -17,18 +13,21 @@ export async function createRepoAndPush(
   files: Array<{ path: string; content: string | Buffer }>,
   description: string = "New MuleSoft POC",
 ) {
-  if (!GITHUB_TOKEN) {
+  const githubToken = process.env.GITHUB_TOKEN;
+  const monorepoName = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
+
+  if (!githubToken) {
     throw new Error("GITHUB_TOKEN is not defined in environment variables.");
   }
-  if (!MONOREPO_NAME) {
+  if (!monorepoName) {
     throw new Error("GITHUB_MONOREPO_NAME is not defined in environment variables.");
   }
 
   const octokit = new Octokit({
-    auth: GITHUB_TOKEN,
+    auth: githubToken,
     request: { timeout: 60000 }, // Increased timeout to 60s
   });
-  const repoName = MONOREPO_NAME;
+  const repoName = monorepoName;
 
   try {
     // Helper for retrying API calls (Handles transient TLS Socket Drops)
@@ -200,16 +199,19 @@ export async function createRepoAndPush(
  * @returns An array of file items.
  */
 export async function getRepoTree(folderName: string) {
-  if (!GITHUB_TOKEN) {
+  const githubToken = process.env.GITHUB_TOKEN;
+  const monorepoName = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
+
+  if (!githubToken) {
     console.error("GITHUB_TOKEN is missing");
     throw new Error("GITHUB_TOKEN is not defined.");
   }
 
   const octokit = new Octokit({
-    auth: GITHUB_TOKEN,
+    auth: githubToken,
     request: { timeout: 60000 },
   });
-  const repoName = MONOREPO_NAME;
+  const repoName = monorepoName;
 
   try {
     const { data: user } = await octokit.users.getAuthenticated();
@@ -273,15 +275,18 @@ export async function getRepoTree(folderName: string) {
  * @returns boolean indicating success.
  */
 export async function deletePOCFolder(folderName: string): Promise<boolean> {
-  if (!GITHUB_TOKEN) {
+  const githubToken = process.env.GITHUB_TOKEN;
+  const monorepoName = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
+
+  if (!githubToken) {
     throw new Error("GITHUB_TOKEN is not defined in environment variables.");
   }
 
   const octokit = new Octokit({
-    auth: GITHUB_TOKEN,
+    auth: githubToken,
     request: { timeout: 60000 },
   });
-  const repoName = MONOREPO_NAME;
+  const repoName = monorepoName;
 
   try {
     const { data: user } = await octokit.users.getAuthenticated();
