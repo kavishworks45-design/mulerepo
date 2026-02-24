@@ -10,6 +10,7 @@ function getAI() {
 }
 
 export interface AIAnalysisResult {
+    icon?: string;
     description: string;
     architecture: {
         source: { name: string; type: string; icon: string; color: string };
@@ -87,6 +88,7 @@ export async function analyzeProject(
             
             Structure:
             {
+                "icon": "A single valid Lucide icon name for the project (e.g. Box, Code, Cloud, Server, Database, Layers, Shield, Activity, Users, Mail, Folder, Smartphone, GitMerge, Lock, Zap, FileCode).",
                 "description": "A comprehensive technical explanation of the pattern. Mention key mechanisms like Batch Processing, Watermarking, Circuit Breakers, etc. (Approx 3-4 sentences).",
                 "difficulty": "Beginner" | "Intermediate" | "Advanced",
                 "tags": ["Tag1", "Tag2"],

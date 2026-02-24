@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       authorName: formData.get("authorName") || "Anonymous",
       createdAt: Date.now(),
       updated: new Date().toISOString(),
-      icon: "Code",
+      icon: aiAnalysis?.icon || "Code",
       // Merge AI Analysis directly into saved metadata
       ...aiAnalysis,
     };
