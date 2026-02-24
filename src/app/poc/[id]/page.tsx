@@ -91,6 +91,37 @@ export default function POCDetailPage({
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStep, setDeployStep] = useState(0);
 
+  // Download State
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (isDownloading || !poc || !poc.folderName) return;
+    setIsDownloading(true);
+
+    try {
+      // Initiate file download via browser API
+      const response = await fetch(`/api/pocs/download?folderName=${encodeURIComponent(poc.folderName)}`);
+      if (!response.ok) throw new Error("Failed to download ZIP");
+
+      // Convert chunked stream to blob and download
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${poc.folderName}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
+    } catch (e) {
+      console.error("Download failed", e);
+      alert("Failed to download the POC repository. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleDeploy = () => {
     if (isDeploying) return;
     setIsDeploying(true);
@@ -734,9 +765,17 @@ export default function POCDetailPage({
                   </>
                 )}
               </button>
-              <button className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors border border-zinc-700">
-                <Download className="h-4 w-4" />
-                Download Zip
+              <button
+                onClick={handleDownload}
+                disabled={isDownloading || !poc?.folderName}
+                className={`flex-1 flex items-center justify-center gap-2 bg-zinc-800 text-white px-6 py-3 rounded-lg font-semibold transition-colors border border-zinc-700 ${isDownloading ? "opacity-75 cursor-wait" : "hover:bg-zinc-700"}`}
+              >
+                {isDownloading ? (
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                {isDownloading ? "Zipping..." : "Download Zip"}
               </button>
               <button className="flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 px-4 py-3 rounded-lg border border-zinc-800 transition-colors">
                 <GitBranch className="h-4 w-4" />

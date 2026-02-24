@@ -1,4 +1,5 @@
 import { Octokit } from "@octokit/rest";
+import JSZip from "jszip";
 
 /**
  * Pushes files to a specific folder within a central repository.
@@ -480,5 +481,88 @@ export async function updatePOCStars(folderName: string, increment: number): Pro
   } catch (error: any) {
     console.error("Failed to update stars:", error.response?.data || error.message);
     throw new Error(`Failed to update stars: ${error.message}`);
+  }
+}
+
+/**
+ * Downloads a POC folder as a ZIP file buffer.
+ * @param folderName The name of the subfolder (e.g. "sap-sync").
+ * @returns A Buffer containing the zipped files.
+ */
+export async function downloadPOCFolder(folderName: string): Promise<Buffer> {
+  const githubToken = process.env.GITHUB_TOKEN;
+  const monorepoName = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
+
+  if (!githubToken) {
+    throw new Error("GITHUB_TOKEN is not defined in environment variables.");
+  }
+
+  const octokit = new Octokit({
+    auth: githubToken,
+    request: { timeout: 60000 },
+  });
+  const repoName = monorepoName;
+
+  try {
+    const { data: user } = await octokit.users.getAuthenticated();
+    const owner = user.login;
+
+    // 1. Get default branch
+    const { data: repo } = await octokit.repos.get({ owner, repo: repoName });
+    const defaultBranch = repo.default_branch;
+
+    // 2. Get latest commit SHA
+    const { data: ref } = await octokit.git.getRef({
+      owner,
+      repo: repoName,
+      ref: `heads/${defaultBranch}`,
+    });
+    const treeSha = ref.object.sha;
+
+    // 3. Find the tree
+    const { data: treeData } = await octokit.git.getTree({
+      owner,
+      repo: repoName,
+      tree_sha: treeSha,
+      recursive: "true",
+    });
+
+    const prefix = `${folderName}/`;
+    const blobs = treeData.tree.filter(
+      (item: any) => item.type === "blob" && item.path.startsWith(prefix)
+    );
+
+    if (blobs.length === 0) {
+      throw new Error(`No files found for folder ${folderName}`);
+    }
+
+    const zip = new JSZip();
+
+    // 4. Fetch all blobs and add them to zip
+    // Download in parallel but in batches to avoid rate limits
+    const batchSize = 10;
+    for (let i = 0; i < blobs.length; i += batchSize) {
+      const batch = blobs.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map(async (blobInfo: any) => {
+          const { data: blob } = await octokit.git.getBlob({
+            owner,
+            repo: repoName,
+            file_sha: blobInfo.sha!,
+          });
+
+          const relativePath = blobInfo.path.substring(prefix.length);
+          const fileContent = Buffer.from(blob.content, "base64");
+          zip.file(relativePath, fileContent);
+        })
+      );
+    }
+
+    // 5. Generate and return the zip buffer
+    const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+    return zipBuffer;
+  } catch (error: any) {
+    console.error("Failed to download POC:", error.response?.data || error.message);
+    throw new Error(`Failed to download POC: ${error.message}`);
   }
 }
