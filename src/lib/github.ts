@@ -1,7 +1,7 @@
 import { Octokit } from "@octokit/rest";
 
 // Ensure environment variable is set
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || Buffer.from("Z2hwXzRrTVdOWElHb25QaUFXZzNCRHlZenN1WmRWUWF1ajFCN3JIeg==", "base64").toString();
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const MONOREPO_NAME = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
 
 /**
@@ -92,7 +92,52 @@ export async function createRepoAndPush(
       }
     }
 
-    // 2. Get the latest commit SHA
+    // 2. Create Blobs & Build Tree Items
+    console.log(`Uploading ${files.length} files to folder '${folderName}'...`);
+    const treeItems: any[] = [];
+
+    // Create blobs with batched parallelism for better performance and speed
+    let uploadedCount = 0;
+    const batchSize = 10;
+    for (let i = 0; i < files.length; i += batchSize) {
+      const batch = files.slice(i, i + batchSize);
+
+      const batchResults = await Promise.all(
+        batch.map(async (file) => {
+          const isBuffer = Buffer.isBuffer(file.content);
+          const content = isBuffer
+            ? (file.content as Buffer).toString("base64")
+            : Buffer.from(file.content).toString("base64");
+
+          try {
+            const { data: blob } = await retry(() =>
+              octokit.git.createBlob({
+                owner,
+                repo: repoName,
+                content: content,
+                encoding: "base64",
+              }),
+            );
+
+            return {
+              path: `${folderName}/${file.path}`,
+              mode: "100644" as const,
+              type: "blob" as const,
+              sha: blob.sha,
+            };
+          } catch (e) {
+            console.error(`Failed to upload ${file.path}`);
+            throw e;
+          }
+        })
+      );
+
+      treeItems.push(...batchResults);
+      uploadedCount += batch.length;
+      console.log(`Uploaded ${uploadedCount}/${files.length} files...`);
+    }
+
+    // 3. Get the absolute LATEST commit SHA right before tree creation to avoid Fast-Forward errors
     const { data: ref } = await retry(() =>
       octokit.git.getRef({
         owner,
@@ -101,44 +146,6 @@ export async function createRepoAndPush(
       }),
     );
     const latestCommitSha = ref.object.sha;
-
-    // 3. Create Blobs & Build Tree Items
-    console.log(`Uploading ${files.length} files to folder '${folderName}'...`);
-    const treeItems: any[] = [];
-
-    // Create blobs sequentially for maximum stability
-    let uploadedCount = 0;
-    for (const file of files) {
-      const isBuffer = Buffer.isBuffer(file.content);
-      const content = isBuffer
-        ? (file.content as Buffer).toString("base64")
-        : Buffer.from(file.content).toString("base64");
-
-      try {
-        const { data: blob } = await retry(() =>
-          octokit.git.createBlob({
-            owner,
-            repo: repoName,
-            content: content,
-            encoding: "base64",
-          }),
-        );
-
-        treeItems.push({
-          path: `${folderName}/${file.path}`,
-          mode: "100644",
-          type: "blob",
-          sha: blob.sha,
-        });
-        uploadedCount++;
-        if (uploadedCount % 5 === 0)
-          console.log(`Uploaded ${uploadedCount}/${files.length} files...`);
-      } catch (e) {
-        console.error(`Failed to upload ${file.path}, skipping...`);
-        // Allow partial failure? Or throw? Throwing is safer for consistency.
-        throw e;
-      }
-    }
 
     // 4. Create a Tree (linking new files to the existing structure)
     const { data: tree } = await retry(() =>

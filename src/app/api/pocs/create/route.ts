@@ -48,7 +48,28 @@ export async function POST(req: NextRequest) {
         continue; // Skip junk & binaries
 
       // Read file content as Node Buffer
-      const content = await zipEntry.async("nodebuffer");
+      let content = await zipEntry.async("nodebuffer");
+
+      // ====== SECURITY FEATURE: SECRET REDACTION ======
+      // If file is YAML or Properties, scrub secrets before pushing to GitHub
+      if (relativePath.endsWith(".yaml") || relativePath.endsWith(".yml") || relativePath.endsWith(".properties")) {
+        let textContent = content.toString("utf-8");
+        // Regex to scrub values for keys that look like passwords, secrets, or tokens
+        // Matches "key=", "key: ", "password=", etc.
+        const scrubRegex = /([a-zA-Z0-9_.-]*(?:password|secret|token|key|client_id|client_secret)[a-zA-Z0-9_.-]*\s*[:=]\s*)(?!\[REDACTED\])(?:"[^"]*"|'[^']*'|[^#\n]*)/gi;
+
+        let redactedCount = 0;
+        textContent = textContent.replace(scrubRegex, (match, prefix) => {
+          redactedCount++;
+          return `${prefix}"[REDACTED_BY_MULE_POC_LIBRARY]"`;
+        });
+
+        if (redactedCount > 0) {
+          console.log(`🔒 SECURITY: Redacted ${redactedCount} secrets from ${relativePath}`);
+          content = Buffer.from(textContent, "utf-8");
+        }
+      }
+      // ================================================
 
       // Store content for AI analysis if it's code
       if (
@@ -121,6 +142,8 @@ export async function POST(req: NextRequest) {
       createdAt: Date.now(),
       updated: new Date().toISOString(),
       icon: "Code",
+      // Merge AI Analysis directly into saved metadata
+      ...aiAnalysis,
     };
 
     // Add poc.json to files list

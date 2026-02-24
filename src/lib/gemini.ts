@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || Buffer.from("QUl6YVN5Q2stc2d6VmpUbkNPMWVhaHctMnRMUWFLa0V5Y2JaTkpB", "base64").toString();
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
@@ -23,12 +23,14 @@ export interface AIAnalysisResult {
     tags: string[];
     documentation?: string;
     difficulty: "Beginner" | "Intermediate" | "Advanced";
+    healthScore?: number;
+    bestPractices?: Array<{ title: string; passed: boolean; reason: string }>;
 }
 
 export async function analyzeProject(
     files: Record<string, string>,
 ): Promise<AIAnalysisResult | null> {
-    const key = process.env.GEMINI_API_KEY || Buffer.from("QUl6YVN5Q2stc2d6VmpUbkNPMWVhaHctMnRMUWFLa0V5Y2JaTkpB", "base64").toString();
+    const key = process.env.GEMINI_API_KEY;
     if (!key) {
         console.error("❌ GEMINI_API_KEY is missing from environment variables.");
         return null;
@@ -63,12 +65,18 @@ export async function analyzeProject(
         }
 
         const prompt = `
-            You are a Senior MuleSoft Architect. Analyze the following MuleSoft project code files and generate a structured JSON summary.
+            You are a Senior MuleSoft Architect and Security Reviewer. Analyze the following MuleSoft project code files and generate a structured JSON summary.
             
             Based on the XML flows, DataWeave scripts, and POM file, identify:
             1. The SOURCE system (e.g., HTTP Listener, Scheduler, Salesforce, SAP).
             2. The TARGET system (e.g., Database, File, Salesforce, Logger).
             3. The main PROCESS logic (what transformation or routing happens?).
+            
+            CRITICAL: Perform a Static Code Analysis and Best Practices Audit.
+            - Look for hardcoded credentials, tokens, or URLs.
+            - Check for global error handlers (\`<error-handler>\`).
+            - Look for secure property placeholders (e.g., \`secure::\`).
+            Give the project an overall "healthScore" (1-100) and list 3-4 "bestPractices" checks (pass/fail).
             
             IMPORTANT: Return ONLY valid JSON. Do not include markdown formatting (like \`\`\`json).
             
@@ -77,7 +85,12 @@ export async function analyzeProject(
                 "description": "A comprehensive technical explanation of the pattern. Mention key mechanisms like Batch Processing, Watermarking, Circuit Breakers, etc. (Approx 3-4 sentences).",
                 "difficulty": "Beginner" | "Intermediate" | "Advanced",
                 "tags": ["Tag1", "Tag2"],
-                "documentation": "# Project Guide\n\n## Overview\n[Detailed explanation]...",
+                "healthScore": 85,
+                "bestPractices": [
+                    { "title": "Global Error Handler", "passed": true, "reason": "Found <error-handler> in global.xml" },
+                    { "title": "Hardcoded Secrets", "passed": false, "reason": "Found plain text client_secret in properties" }
+                ],
+                "documentation": "# Project Guide\\n\\n## Overview\\n[Detailed explanation]...",
                 "architecture": {
                     "source": { "name": "Source Name", "type": "Source", "icon": "Cloud", "color": "blue" },
                     "process": { "name": "Mule App", "type": "Process", "icon": "Box", "color": "purple" },
@@ -85,8 +98,7 @@ export async function analyzeProject(
                 },
                 "logicBreakdown": {
                     "cards": [
-                        { "title": "Watermarking", "type": "Mechanism", "description": "Automatically tracks LastModifiedDate...", "color": "blue" },
-                         { "title": "Error Handling", "type": "Reliability", "description": "Routes failed records to DLQ...", "color": "red" }
+                        { "title": "Watermarking", "type": "Mechanism", "description": "Automatically tracks LastModifiedDate...", "color": "blue" }
                     ]
                 },
                 "dependencies": [
@@ -99,7 +111,7 @@ export async function analyzeProject(
         `;
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-pro",
+            model: "gemini-2.5-flash",
             contents: prompt,
         });
 

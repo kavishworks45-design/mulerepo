@@ -83,6 +83,24 @@ export default function POCDetailPage({
   const [muleFlows, setMuleFlows] = useState<any[]>([]);
   const [loadingFlows, setLoadingFlows] = useState(false);
 
+  // Deployment Demo State
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployStep, setDeployStep] = useState(0);
+
+  const handleDeploy = () => {
+    if (isDeploying) return;
+    setIsDeploying(true);
+    setDeployStep(1);
+
+    setTimeout(() => { setDeployStep(2); }, 1500);
+    setTimeout(() => { setDeployStep(3); }, 3500);
+    setTimeout(() => {
+      setIsDeploying(false);
+      setDeployStep(4);
+      setTimeout(() => setDeployStep(0), 4000); // Reset to base state after showing success
+    }, 6000);
+  };
+
   // Typing animation logic
   const [visibleCount, setVisibleCount] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -115,9 +133,16 @@ export default function POCDetailPage({
 
       // 2. Fetch from GitHub List API
       try {
-        const res = await fetch("/api/pocs/list");
-        const allPocs = await res.json();
-        const found = allPocs.find((p: any) => p.id == id); // Loose equality for string/number match
+        let res = await fetch("/api/pocs/list");
+        let allPocs = await res.json();
+        let found = allPocs.find((p: any) => p.id == id); // Loose equality for string/number match
+
+        if (!found) {
+          console.log("POC not found in cache, trying fresh fetch...");
+          res = await fetch("/api/pocs/list?fresh=true");
+          allPocs = await res.json();
+          found = allPocs.find((p: any) => p.id == id);
+        }
 
         if (found) {
           // Map generic metadata to component structure
@@ -129,27 +154,26 @@ export default function POCDetailPage({
               description: found.description,
               architecture: {
                 source: {
-                  name: "Source",
-                  type: "Unknown",
-                  icon: Cloud,
-                  color: "gray",
+                  name: found.architecture?.source?.name || found.details?.architecture?.source?.name || "Source",
+                  type: found.architecture?.source?.type || found.details?.architecture?.source?.type || "Unknown",
+                  icon: ICON_MAP[found.architecture?.source?.icon || found.details?.architecture?.source?.icon] || Cloud,
+                  color: found.architecture?.source?.color || found.details?.architecture?.source?.color || "gray",
                 },
                 process: {
-                  name: "Process",
-                  type: "Mule",
-                  icon: Box,
-                  color: "blue",
+                  name: found.architecture?.process?.name || found.details?.architecture?.process?.name || "Process",
+                  type: found.architecture?.process?.type || found.details?.architecture?.process?.type || "Mule",
+                  icon: ICON_MAP[found.architecture?.process?.icon || found.details?.architecture?.process?.icon] || Box,
+                  color: found.architecture?.process?.color || found.details?.architecture?.process?.color || "blue",
                 },
                 target: {
-                  name: "Target",
-                  type: "Unknown",
-                  icon: Database,
-                  color: "gray",
-                },
-                ...found.details?.architecture,
+                  name: found.architecture?.target?.name || found.details?.architecture?.target?.name || "Target",
+                  type: found.architecture?.target?.type || found.details?.architecture?.target?.type || "Unknown",
+                  icon: ICON_MAP[found.architecture?.target?.icon || found.details?.architecture?.target?.icon] || Database,
+                  color: found.architecture?.target?.color || found.details?.architecture?.target?.color || "gray",
+                }
               },
-              logicBreakdown: found.details?.logicBreakdown || { cards: [] },
-              dependencies: found.details?.dependencies || [],
+              logicBreakdown: found.logicBreakdown || found.details?.logicBreakdown || { cards: [] },
+              dependencies: found.dependencies || found.details?.dependencies || [],
               changelog: [],
             },
           };
@@ -557,13 +581,12 @@ export default function POCDetailPage({
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div
-                  className={`px-2 py-1 rounded text-xs font-medium border ${
-                    poc.difficulty === "Advanced"
-                      ? "bg-red-500/10 text-red-400 border-red-500/20"
-                      : poc.difficulty === "Intermediate"
-                        ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                        : "bg-green-500/10 text-green-400 border-green-500/20"
-                  }`}
+                  className={`px-2 py-1 rounded text-xs font-medium border ${poc.difficulty === "Advanced"
+                    ? "bg-red-500/10 text-red-400 border-red-500/20"
+                    : poc.difficulty === "Intermediate"
+                      ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                      : "bg-green-500/10 text-green-400 border-green-500/20"
+                    }`}
                 >
                   {poc.difficulty}
                 </div>
@@ -618,16 +641,41 @@ export default function POCDetailPage({
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 min-w-[200px]">
-              <button className="flex-1 btn btn-primary flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                <Download className="h-4 w-4" />
-                Download JAR
+              <button
+                onClick={handleDeploy}
+                disabled={isDeploying || deployStep === 4}
+                className={`flex-1 btn btn-primary flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 group ${isDeploying
+                  ? "bg-blue-900/50 text-blue-200 border border-blue-500/50 cursor-wait shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+                  : deployStep === 4
+                    ? "bg-green-600 text-white shadow-[0_0_20px_rgba(34,197,94,0.4)] cursor-default"
+                    : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] text-white shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:-translate-y-0.5"
+                  }`}
+              >
+                {isDeploying ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {deployStep === 1 && "Authenticating..."}
+                    {deployStep === 2 && "Provisioning Worker..."}
+                    {deployStep === 3 && "Starting App..."}
+                  </>
+                ) : deployStep === 4 ? (
+                  <>
+                    <Check className="h-5 w-5" />
+                    Live on CloudHub
+                  </>
+                ) : (
+                  <>
+                    <Cloud className="h-5 w-5 group-hover:-translate-y-0.5 transition-transform" />
+                    Deploy to CloudHub
+                  </>
+                )}
               </button>
-              <button className="flex-1 btn btn-secondary flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors border border-zinc-700">
-                <GitBranch className="h-4 w-4" />
-                Fork Repo
+              <button className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors border border-zinc-700">
+                <Download className="h-4 w-4" />
+                Download Zip
               </button>
               <button className="flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 px-4 py-3 rounded-lg border border-zinc-800 transition-colors">
-                <Share2 className="h-4 w-4" />
+                <GitBranch className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -649,11 +697,10 @@ export default function POCDetailPage({
                   onClick={() =>
                     setActiveTab(tab.toLowerCase().replace(" ", "-"))
                   }
-                  className={`py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                    activeTab === tab.toLowerCase().replace(" ", "-")
-                      ? "border-blue-500 text-blue-500"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                  }`}
+                  className={`py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.toLowerCase().replace(" ", "-")
+                    ? "border-blue-500 text-blue-500"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                    }`}
                 >
                   {tab}
                 </button>
@@ -680,43 +727,43 @@ export default function POCDetailPage({
                       details?.architecture ||
                       (muleFlows.length > 0
                         ? {
-                            source: {
-                              name:
-                                muleFlows[0].components[0]?.name ||
-                                "Dynamic Trigger",
-                              type: "Source Listener",
-                              icon: muleFlows[0].components[0]?.icon || Globe,
-                              color:
-                                muleFlows[0].components[0]?.color || "blue",
-                            },
-                            process: {
-                              name: "MuleSoft 4",
-                              type: "Transform & Route",
-                              icon: Activity,
-                              color: "purple",
-                            },
-                            target: {
-                              name:
-                                muleFlows[0].components.length > 1
-                                  ? muleFlows[0].components[
-                                      muleFlows[0].components.length - 1
-                                    ].name
-                                  : "Internal Logic",
-                              type: "Target System",
-                              icon:
-                                muleFlows[0].components.length > 1
-                                  ? muleFlows[0].components[
-                                      muleFlows[0].components.length - 1
-                                    ].icon
-                                  : Database,
-                              color:
-                                muleFlows[0].components.length > 1
-                                  ? muleFlows[0].components[
-                                      muleFlows[0].components.length - 1
-                                    ].color
-                                  : "green",
-                            },
-                          }
+                          source: {
+                            name:
+                              muleFlows[0].components[0]?.name ||
+                              "Dynamic Trigger",
+                            type: "Source Listener",
+                            icon: muleFlows[0].components[0]?.icon || Globe,
+                            color:
+                              muleFlows[0].components[0]?.color || "blue",
+                          },
+                          process: {
+                            name: "MuleSoft 4",
+                            type: "Transform & Route",
+                            icon: Activity,
+                            color: "purple",
+                          },
+                          target: {
+                            name:
+                              muleFlows[0].components.length > 1
+                                ? muleFlows[0].components[
+                                  muleFlows[0].components.length - 1
+                                ].name
+                                : "Internal Logic",
+                            type: "Target System",
+                            icon:
+                              muleFlows[0].components.length > 1
+                                ? muleFlows[0].components[
+                                  muleFlows[0].components.length - 1
+                                ].icon
+                                : Database,
+                            color:
+                              muleFlows[0].components.length > 1
+                                ? muleFlows[0].components[
+                                  muleFlows[0].components.length - 1
+                                ].color
+                                : "green",
+                          },
+                        }
                         : null);
 
                     if (!displayArch) {
@@ -917,9 +964,13 @@ export default function POCDetailPage({
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 not-prose">
                     {(() => {
-                      const displayLogicCards =
-                        details?.logicBreakdown?.cards ||
-                        muleFlows
+                      const rawCards = details?.logicBreakdown?.cards || [];
+                      const displayLogicCards = rawCards.length > 0
+                        ? rawCards.map((card: any) => ({
+                          ...card,
+                          icon: ICON_MAP[card.icon as string] || Box,
+                        }))
+                        : muleFlows
                           .map((f) => ({
                             title: f.name,
                             icon: f.type === "sub-flow" ? Layers : GitMerge,
@@ -1013,6 +1064,52 @@ export default function POCDetailPage({
                         {poc.authorName || poc.author || "Unknown"}
                       </p>
                     </div>
+                  </div>
+                </section>
+
+                {/* BEST PRACTICES & HEALTH SCORE SECTION */}
+                <section className="mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-blue-400" />
+                      Security & Health
+                    </h3>
+                  </div>
+
+                  <div className="bg-[#121214] border border-white/5 rounded-xl overflow-hidden shadow-xl">
+                    <div className="p-6 border-b border-white/5 flex items-center gap-4">
+                      <div className={`relative w-16 h-16 rounded-full flex items-center justify-center font-bold text-xl ${!poc.healthScore ? 'text-zinc-500 bg-zinc-900' :
+                        poc.healthScore >= 90 ? 'text-green-400 bg-green-500/10 border-2 border-green-500/50' :
+                          poc.healthScore >= 70 ? 'text-yellow-400 bg-yellow-500/10 border-2 border-yellow-500/50' :
+                            'text-red-400 bg-red-500/10 border-2 border-red-500/50'
+                        }`}>
+                        {poc.healthScore || 'N/A'}
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold">Overall Quality</h4>
+                        <p className="text-sm text-zinc-400">Determined by Gemini AI Analysis</p>
+                      </div>
+                    </div>
+
+                    {poc.bestPractices && poc.bestPractices.length > 0 ? (
+                      <div className="p-4 bg-black/20 space-y-3">
+                        {poc.bestPractices.map((check: any, idx: number) => (
+                          <div key={idx} className="flex gap-3 text-sm">
+                            <div className={`mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center ${check.passed ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-500'}`}>
+                              <Check className="h-3 w-3" />
+                            </div>
+                            <div>
+                              <div className={`font-medium ${check.passed ? 'text-zinc-300' : 'text-red-400'}`}>{check.title}</div>
+                              <div className="text-zinc-500 text-xs mt-0.5">{check.reason}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center text-sm text-zinc-500 bg-black/20">
+                        Wait for next AI scan to view detailed checklist.
+                      </div>
+                    )}
                   </div>
                 </section>
               </div>
