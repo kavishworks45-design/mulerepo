@@ -1,8 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+let ai: GoogleGenAI | null = null;
+function getAI() {
+    if (!ai) {
+        if (!process.env.GEMINI_API_KEY) return null;
+        ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    }
+    return ai;
+}
 
 export interface AIAnalysisResult {
     description: string;
@@ -110,7 +115,10 @@ export async function analyzeProject(
             ${fileContext}
         `;
 
-        const response = await ai.models.generateContent({
+        const activeAi = getAI();
+        if (!activeAi) return null;
+
+        const response = await activeAi.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
         });
