@@ -370,3 +370,115 @@ export async function deletePOCFolder(folderName: string): Promise<boolean> {
     throw new Error(`Failed to delete folder: ${error.message}`);
   }
 }
+
+/**
+ * Updates the stars count in the poc.json for a specific POC.
+ * @param folderName The name of the subfolder (e.g. "sap-sync").
+ * @param increment Positive or negative number to add to the stars count.
+ */
+export async function updatePOCStars(folderName: string, increment: number): Promise<boolean> {
+  const githubToken = process.env.GITHUB_TOKEN;
+  const monorepoName = process.env.GITHUB_MONOREPO_NAME || "mule-poc-library";
+
+  if (!githubToken) {
+    throw new Error("GITHUB_TOKEN is not defined in environment variables.");
+  }
+
+  const octokit = new Octokit({
+    auth: githubToken,
+    request: { timeout: 60000 },
+  });
+  const repoName = monorepoName;
+
+  try {
+    const { data: user } = await octokit.users.getAuthenticated();
+    const owner = user.login;
+
+    // 1. Get default branch
+    const { data: repo } = await octokit.repos.get({ owner, repo: repoName });
+    const defaultBranch = repo.default_branch;
+
+    // 2. Get latest commit SHA
+    const { data: ref } = await octokit.git.getRef({
+      owner,
+      repo: repoName,
+      ref: `heads/${defaultBranch}`,
+    });
+    const treeSha = ref.object.sha;
+
+    // 3. Find the existing poc.json blob
+    const { data: treeData } = await octokit.git.getTree({
+      owner,
+      repo: repoName,
+      tree_sha: treeSha,
+      recursive: "true",
+    });
+
+    const pocJsonPath = `${folderName}/poc.json`;
+    const pocJsonFile = treeData.tree.find((item: any) => item.path === pocJsonPath);
+
+    if (!pocJsonFile || !pocJsonFile.sha) {
+      throw new Error(`poc.json not found for folder ${folderName}`);
+    }
+
+    // 4. Get current content
+    const { data: blob } = await octokit.git.getBlob({
+      owner,
+      repo: repoName,
+      file_sha: pocJsonFile.sha,
+    });
+
+    const content = Buffer.from(blob.content, "base64").toString("utf-8");
+    const pocData = JSON.parse(content);
+
+    // 5. Modify stars
+    pocData.stars = (pocData.stars || 0) + increment;
+    if (pocData.stars < 0) pocData.stars = 0;
+
+    // 6. Create new blob
+    const { data: newBlob } = await octokit.git.createBlob({
+      owner,
+      repo: repoName,
+      content: JSON.stringify(pocData, null, 2),
+      encoding: "utf-8",
+    });
+
+    // 7. Create new tree
+    const { data: newTree } = await octokit.git.createTree({
+      owner,
+      repo: repoName,
+      base_tree: treeSha,
+      tree: [
+        {
+          path: pocJsonPath,
+          mode: "100644" as const,
+          type: "blob" as const,
+          sha: newBlob.sha,
+        }
+      ],
+    });
+
+    // 8. Create Commit
+    const { data: newCommit } = await octokit.git.createCommit({
+      owner,
+      repo: repoName,
+      message: `Update stars for ${folderName}`,
+      tree: newTree.sha,
+      parents: [treeSha],
+    });
+
+    // 9. Update Ref
+    await octokit.git.updateRef({
+      owner,
+      repo: repoName,
+      ref: `heads/${defaultBranch}`,
+      sha: newCommit.sha,
+    });
+
+    console.log(`Successfully updated stars for ${folderName} to ${pocData.stars}`);
+    return true;
+  } catch (error: any) {
+    console.error("Failed to update stars:", error.response?.data || error.message);
+    throw new Error(`Failed to update stars: ${error.message}`);
+  }
+}

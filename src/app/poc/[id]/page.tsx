@@ -83,6 +83,10 @@ export default function POCDetailPage({
   const [muleFlows, setMuleFlows] = useState<any[]>([]);
   const [loadingFlows, setLoadingFlows] = useState(false);
 
+  // Starring State
+  const [isStarred, setIsStarred] = useState(false);
+  const [isStarring, setIsStarring] = useState(false);
+
   // Deployment Demo State
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStep, setDeployStep] = useState(0);
@@ -99,6 +103,62 @@ export default function POCDetailPage({
       setDeployStep(4);
       setTimeout(() => setDeployStep(0), 4000); // Reset to base state after showing success
     }, 6000);
+  };
+
+  useEffect(() => {
+    if (id && typeof window !== "undefined") {
+      setIsStarred(localStorage.getItem(`starred_${id}`) === "true");
+    }
+  }, [id]);
+
+  const toggleStar = async () => {
+    if (isStarring || !poc) return;
+    setIsStarring(true);
+    const newStatus = !isStarred;
+
+    // Optimistic UI update
+    setPoc((prev: any) => ({
+      ...prev,
+      stars: (prev.stars || 0) + (newStatus ? 1 : -1)
+    }));
+    setIsStarred(newStatus);
+
+    if (typeof window !== "undefined") {
+      if (newStatus) {
+        localStorage.setItem(`starred_${id}`, "true");
+      } else {
+        localStorage.removeItem(`starred_${id}`);
+      }
+    }
+
+    try {
+      // If it's a GitHub repo POC (has folderName) update remote
+      if (poc.folderName) {
+        const res = await fetch("/api/pocs/star", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            folderName: poc.folderName,
+            action: newStatus ? "add" : "remove"
+          })
+        });
+        if (!res.ok) throw new Error("Failed to sync star to server");
+      }
+    } catch (e) {
+      console.error("Failed to update stars remotely", e);
+      // Revert optimistic update on failure
+      setPoc((prev: any) => ({
+        ...prev,
+        stars: (prev.stars || 0) + (newStatus ? -1 : 1)
+      }));
+      setIsStarred(!newStatus);
+      if (typeof window !== "undefined") {
+        if (!newStatus) localStorage.setItem(`starred_${id}`, "true");
+        else localStorage.removeItem(`starred_${id}`);
+      }
+    } finally {
+      setIsStarring(false);
+    }
   };
 
   // Typing animation logic
@@ -628,10 +688,14 @@ export default function POCDetailPage({
                     By {poc.authorName || poc.author || "Unknown"}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-yellow-500/50" />
+                <button
+                  onClick={toggleStar}
+                  disabled={isStarring}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${isStarred ? "bg-yellow-500/10 border-yellow-500/50 text-yellow-500" : "bg-zinc-900 border-white/10 hover:bg-zinc-800 text-zinc-300"}`}
+                >
+                  <Star className={`h-4 w-4 ${isStarred ? "fill-current" : ""}`} />
                   <span>{poc.stars || 0} Stars</span>
-                </div>
+                </button>
                 <div className="flex items-center gap-2">
                   <GitBranch className="h-4 w-4" />
                   <span>{poc.forks || 0} Forks</span>
