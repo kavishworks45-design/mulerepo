@@ -62,6 +62,27 @@ export default function BrowsePage() {
         return 0;
     });
 
+    const timeAgo = (dateStr: string | undefined) => {
+        if (!dateStr || dateStr === "Unknown") return "Unknown";
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr; // fallback for plain strings
+        const now = new Date();
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (seconds < 60) return "Just now";
+        let interval = seconds / 31536000;
+        if (interval >= 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval >= 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval >= 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval >= 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval >= 1) return Math.floor(interval) + " mins ago";
+        return Math.floor(seconds) + " seconds ago";
+    };
+
     const allTags = ["All", ...Array.from(new Set(allPOCs.flatMap(p => p.tags)))];
 
     return (
@@ -166,7 +187,7 @@ export default function BrowsePage() {
                                         </Link>
                                     </h3>
 
-                                    <p className="text-muted-foreground text-sm mb-6 flex-1 text-balance">
+                                    <p className="text-muted-foreground text-sm mb-6 flex-1 line-clamp-3">
                                         {poc.description}
                                     </p>
 
@@ -193,7 +214,7 @@ export default function BrowsePage() {
                                             </span>
                                         </div>
                                         <span className="flex items-center gap-1 hover:text-foreground transition-colors group-hover:translate-x-1 duration-300">
-                                            {poc.updated}
+                                            {timeAgo(poc.updated)}
                                             <ArrowRight className="h-3 w-3 ml-1" />
                                         </span>
                                     </div>
