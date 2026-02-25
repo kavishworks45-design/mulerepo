@@ -1415,10 +1415,10 @@ export default function POCDetailPage({
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setIsChatOpen(!isChatOpen)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-xs transition-colors font-medium"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-all font-medium border ${isChatOpen ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/20'}`}
                               >
                                 <Bot className="h-3 w-3" />
-                                {isChatOpen ? "Close AI" : "Ask AI"}
+                                {isChatOpen ? "Close AI" : "Ask AI Assistant"}
                               </button>
                               <button
                                 onClick={handleCopy}
@@ -1453,34 +1453,41 @@ export default function POCDetailPage({
 
                         {/* Chat Panel Sidebar */}
                         {isChatOpen && (
-                          <div className="w-full lg:w-1/3 flex flex-col h-full bg-[#0d0d0f] relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.5)] lg:shadow-none absolute lg:relative inset-y-0 right-0">
-                            <div className="p-3 border-b border-white/5 bg-[#121214] flex items-center justify-between">
+                          <div className="w-full lg:w-1/3 flex flex-col h-full bg-[#09090b]/95 backdrop-blur-xl relative z-20 shadow-[-20px_0_30px_rgba(0,0,0,0.8)] lg:shadow-none absolute lg:relative inset-y-0 right-0 border-l border-white/5">
+                            <div className="p-4 border-b border-white/5 bg-gradient-to-r from-purple-500/10 to-blue-500/10 flex items-center justify-between">
                               <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                                <Bot className="h-4 w-4 text-purple-400" />
-                                Code Assistant
+                                <div className="p-1.5 bg-purple-500/20 rounded-md border border-purple-500/30">
+                                  <Bot className="h-4 w-4 text-purple-400" />
+                                </div>
+                                <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Mule Code Assistant</span>
                               </div>
-                              <button onClick={() => setIsChatOpen(false)} className="text-zinc-500 hover:text-white lg:hidden">
+                              <button onClick={() => setIsChatOpen(false)} className="text-zinc-500 hover:text-white p-1 hover:bg-white/10 rounded-md transition-colors lg:hidden">
                                 <X className="h-4 w-4" />
                               </button>
                             </div>
 
-                            <div ref={chatScrollRef} className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
+                            <div ref={chatScrollRef} className="flex-1 p-5 overflow-y-auto space-y-6 scrollbar-thin scroll-smooth">
                               {chatMessages.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                                  <MessageSquare className="h-8 w-8 text-zinc-600 mb-3" />
-                                  <p className="text-sm text-zinc-400">Ask a question about this DataWeave script right now!</p>
+                                <div className="flex flex-col items-center justify-center h-full text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                  <div className="w-16 h-16 bg-gradient-to-tr from-purple-500/20 to-blue-500/20 rounded-2xl border border-white/10 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
+                                    <Bot className="h-8 w-8 text-purple-400" />
+                                  </div>
+                                  <h4 className="text-zinc-200 font-medium mb-2">How can I help you?</h4>
+                                  <p className="text-sm text-zinc-500 leading-relaxed max-w-[250px]">
+                                    Ask me to explain this script, find bugs, or suggest modifications to the DataWeave transformation.
+                                  </p>
                                 </div>
                               ) : (
                                 chatMessages.map((msg, i) => (
-                                  <div key={i} className={`flex gap-3 text-sm ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                                    <div className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded flex items-center justify-center ${msg.role === "user" ? "bg-blue-600/30 text-blue-400" : "bg-purple-600/30 text-purple-400"}`}>
-                                      {msg.role === "user" ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                                  <div key={i} className={`flex gap-3 text-sm animate-in fade-in slide-in-from-bottom-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                                    <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border shadow-sm ${msg.role === "user" ? "bg-blue-600/20 text-blue-400 border-blue-500/30" : "bg-purple-600/20 text-purple-400 border-purple-500/30"}`}>
+                                      {msg.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                                     </div>
-                                    <div className={`py-2 px-3 rounded-lg flex-1 ${msg.role === "user" ? "bg-blue-600/10 text-blue-100 rounded-tr-none border border-blue-500/10" : "bg-white/5 text-zinc-300 rounded-tl-none border border-white/5"}`}>
+                                    <div className={`relative py-3 px-4 flex-1 shadow-md ${msg.role === "user" ? "bg-blue-600/10 text-blue-100 rounded-2xl rounded-tr-sm border border-blue-500/10" : "bg-white/5 text-zinc-300 rounded-2xl rounded-tl-sm border border-white/5"}`}>
                                       {msg.role === "user" ? (
-                                        msg.content
+                                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                                       ) : (
-                                        <div className="prose prose-sm prose-invert max-w-none text-xs break-words">
+                                        <div className="prose prose-sm prose-invert max-w-none text-[13px] leading-relaxed break-words">
                                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                                         </div>
                                       )}
@@ -1489,34 +1496,34 @@ export default function POCDetailPage({
                                 ))
                               )}
                               {isChatLoading && (
-                                <div className="flex gap-3 text-sm">
-                                  <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded bg-purple-600/30 text-purple-400 flex items-center justify-center">
-                                    <Bot className="h-3 w-3" />
+                                <div className="flex gap-3 text-sm animate-in fade-in slide-in-from-bottom-2">
+                                  <div className="mt-1 flex-shrink-0 w-8 h-8 rounded-full bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center shadow-sm">
+                                    <Bot className="h-4 w-4" />
                                   </div>
-                                  <div className="py-2.5 px-4 rounded-lg bg-white/5 rounded-tl-none border border-white/5 flex items-center gap-1.5">
-                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce"></div>
+                                  <div className="py-3 px-5 rounded-2xl bg-white/5 rounded-tl-sm border border-white/5 flex items-center gap-2 shadow-md">
+                                    <div className="w-1.5 h-1.5 bg-purple-400/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="w-1.5 h-1.5 bg-purple-400/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="w-1.5 h-1.5 bg-purple-400/60 rounded-full animate-bounce"></div>
                                   </div>
                                 </div>
                               )}
                             </div>
 
-                            <div className="p-3 bg-[#121214] border-t border-white/5 relative z-30">
+                            <div className="p-4 bg-black/40 border-t border-white/5 relative z-30">
                               <form onSubmit={handleSendChatMessage} className="relative flex items-center">
                                 <input
                                   type="text"
                                   value={chatInput}
                                   onChange={(e) => setChatInput(e.target.value)}
-                                  placeholder="Ask a question about this script..."
-                                  className="w-full pl-3 pr-10 py-2.5 bg-zinc-900 border border-zinc-700 focus:border-blue-500 text-sm rounded-lg text-white placeholder-zinc-500 outline-none transition-all focus:ring-1 focus:ring-blue-500"
+                                  placeholder="Ask about this code..."
+                                  className="w-full pl-4 pr-12 py-3 bg-zinc-900/50 border border-white/10 focus:border-purple-500/50 text-sm rounded-xl text-white placeholder-zinc-500 outline-none transition-all focus:ring-2 focus:ring-purple-500/20 focus:bg-zinc-900"
                                 />
                                 <button
                                   type="submit"
                                   disabled={!chatInput.trim() || isChatLoading}
-                                  className="absolute right-1 p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors disabled:opacity-50 disabled:hover:bg-blue-600 flex items-center justify-center"
+                                  className="absolute right-1.5 p-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg transition-all disabled:opacity-30 disabled:hover:from-purple-600 disabled:hover:to-blue-600 flex items-center justify-center shadow-md shadow-purple-900/20"
                                 >
-                                  <Send className="h-3.5 w-3.5" />
+                                  <Send className="h-4 w-4 ml-0.5" />
                                 </button>
                               </form>
                             </div>
