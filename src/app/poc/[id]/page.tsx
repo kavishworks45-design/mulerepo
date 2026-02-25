@@ -33,9 +33,14 @@ import {
   Zap,
   FileCode,
   Globe,
+  MessageSquare,
+  Send,
+  X,
+  Bot
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import ReactMarkdown from 'react-markdown';
 
 const ICON_MAP: Record<string, any> = {
   Box,
@@ -134,6 +139,55 @@ export default function POCDetailPage({
       setDeployStep(4);
       setTimeout(() => setDeployStep(0), 4000); // Reset to base state after showing success
     }, 6000);
+  };
+
+  // Chat State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{ role: string, content: string }[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatMessages, isChatLoading]);
+
+  const handleSendChatMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || isChatLoading) return;
+
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    const newMessages = [...chatMessages, { role: "user", content: userMsg }];
+    setChatMessages(newMessages);
+    setIsChatLoading(true);
+
+    try {
+      const fileObj = dwlFiles.find((f: any) => f.sha === selectedDwlSha);
+      const fileName = fileObj ? fileObj.path.split("/").pop() : "unknown";
+      const codeContext = dwlContents[selectedDwlSha as string] || "";
+
+      const res = await fetch("/api/pocs/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: newMessages,
+          fileName,
+          codeContext
+        })
+      });
+
+      if (!res.ok) throw new Error("API error");
+
+      const data = await res.json();
+      setChatMessages([...newMessages, { role: "assistant", content: data.text }]);
+    } catch (err) {
+      setChatMessages([...newMessages, { role: "assistant", content: "Sorry, I encountered an error checking that. Please try again." }]);
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -1346,48 +1400,133 @@ export default function POCDetailPage({
                   </div>
 
                   {/* Code Viewer Main Area */}
-                  <div className="lg:col-span-3 bg-[#1e1e2e] border border-white/5 rounded-xl overflow-hidden flex flex-col h-[500px] shadow-2xl relative">
-                    {selectedDwlSha && (
+                  <div className="lg:col-span-3 border border-white/5 rounded-xl overflow-hidden flex h-[500px] shadow-2xl relative bg-[#121214]">
+                    {selectedDwlSha ? (
                       <>
-                        <div className="px-6 py-3 border-b border-white/5 bg-black/40 flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-sm text-zinc-300 font-mono">
-                            <Code className="h-4 w-4 text-yellow-400" />
-                            {dwlFiles
-                              .find((f) => f.sha === selectedDwlSha)
-                              ?.path.split("/")
-                              .pop()}
-                          </div>
-                          <button
-                            onClick={handleCopy}
-                            disabled={
-                              loadingDwl || !dwlContents[selectedDwlSha]
-                            }
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 text-xs text-zinc-300 transition-colors font-medium border border-white/5 disabled:opacity-50"
-                          >
-                            {copied ? (
-                              <Check className="h-3 w-3 text-green-400" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                            {copied ? "Copied" : "Copy"}
-                          </button>
-                        </div>
-                        <div className="p-6 overflow-auto flex-1 text-sm font-mono text-blue-100 leading-relaxed scrollbar-thin relative">
-                          {loadingDwl ? (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                              <div className="h-6 w-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
-                              <span className="text-zinc-500 text-xs animate-pulse">
-                                Fetching from repository...
-                              </span>
+                        <div className={`flex flex-col h-full bg-[#1e1e2e] transition-all duration-300 ${isChatOpen ? 'w-full lg:w-2/3 border-r border-white/5' : 'w-full'}`}>
+                          <div className="px-6 py-3 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm text-zinc-300 font-mono">
+                              <Code className="h-4 w-4 text-yellow-400" />
+                              {dwlFiles
+                                .find((f) => f.sha === selectedDwlSha)
+                                ?.path.split("/")
+                                .pop()}
                             </div>
-                          ) : (
-                            <pre className="whitespace-pre-wrap word-break">
-                              {dwlContents[selectedDwlSha] ||
-                                "// No content found or empty file"}
-                            </pre>
-                          )}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setIsChatOpen(!isChatOpen)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-xs transition-colors font-medium"
+                              >
+                                <Bot className="h-3 w-3" />
+                                {isChatOpen ? "Close AI" : "Ask AI"}
+                              </button>
+                              <button
+                                onClick={handleCopy}
+                                disabled={loadingDwl || !dwlContents[selectedDwlSha]}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 text-xs text-zinc-300 transition-colors font-medium border border-white/5 disabled:opacity-50"
+                              >
+                                {copied ? (
+                                  <Check className="h-3 w-3 text-green-400" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                                {copied ? "Copied" : "Copy"}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="p-6 overflow-auto flex-1 text-sm font-mono text-blue-100 leading-relaxed scrollbar-thin relative">
+                            {loadingDwl ? (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <div className="h-6 w-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
+                                <span className="text-zinc-500 text-xs animate-pulse">
+                                  Fetching from repository...
+                                </span>
+                              </div>
+                            ) : (
+                              <pre className="whitespace-pre-wrap word-break">
+                                {dwlContents[selectedDwlSha] ||
+                                  "// No content found or empty file"}
+                              </pre>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Chat Panel Sidebar */}
+                        {isChatOpen && (
+                          <div className="w-full lg:w-1/3 flex flex-col h-full bg-[#0d0d0f] relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.5)] lg:shadow-none absolute lg:relative inset-y-0 right-0">
+                            <div className="p-3 border-b border-white/5 bg-[#121214] flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                                <Bot className="h-4 w-4 text-purple-400" />
+                                Code Assistant
+                              </div>
+                              <button onClick={() => setIsChatOpen(false)} className="text-zinc-500 hover:text-white lg:hidden">
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            <div ref={chatScrollRef} className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
+                              {chatMessages.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                                  <MessageSquare className="h-8 w-8 text-zinc-600 mb-3" />
+                                  <p className="text-sm text-zinc-400">Ask a question about this DataWeave script right now!</p>
+                                </div>
+                              ) : (
+                                chatMessages.map((msg, i) => (
+                                  <div key={i} className={`flex gap-3 text-sm ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                                    <div className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded flex items-center justify-center ${msg.role === "user" ? "bg-blue-600/30 text-blue-400" : "bg-purple-600/30 text-purple-400"}`}>
+                                      {msg.role === "user" ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                                    </div>
+                                    <div className={`py-2 px-3 rounded-lg flex-1 ${msg.role === "user" ? "bg-blue-600/10 text-blue-100 rounded-tr-none border border-blue-500/10" : "bg-white/5 text-zinc-300 rounded-tl-none border border-white/5"}`}>
+                                      {msg.role === "user" ? (
+                                        msg.content
+                                      ) : (
+                                        <div className="prose prose-sm prose-invert max-w-none text-xs break-words">
+                                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                              {isChatLoading && (
+                                <div className="flex gap-3 text-sm">
+                                  <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded bg-purple-600/30 text-purple-400 flex items-center justify-center">
+                                    <Bot className="h-3 w-3" />
+                                  </div>
+                                  <div className="py-2.5 px-4 rounded-lg bg-white/5 rounded-tl-none border border-white/5 flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce"></div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="p-3 bg-[#121214] border-t border-white/5 relative z-30">
+                              <form onSubmit={handleSendChatMessage} className="relative flex items-center">
+                                <input
+                                  type="text"
+                                  value={chatInput}
+                                  onChange={(e) => setChatInput(e.target.value)}
+                                  placeholder="Ask a question about this script..."
+                                  className="w-full pl-3 pr-10 py-2.5 bg-zinc-900 border border-zinc-700 focus:border-blue-500 text-sm rounded-lg text-white placeholder-zinc-500 outline-none transition-all focus:ring-1 focus:ring-blue-500"
+                                />
+                                <button
+                                  type="submit"
+                                  disabled={!chatInput.trim() || isChatLoading}
+                                  className="absolute right-1 p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors disabled:opacity-50 disabled:hover:bg-blue-600 flex items-center justify-center"
+                                >
+                                  <Send className="h-3.5 w-3.5" />
+                                </button>
+                              </form>
+                            </div>
+                          </div>
+                        )}
                       </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center w-full h-full text-zinc-500">
+                        Select a DataWeave file from the left.
+                      </div>
                     )}
                   </div>
                 </div>
