@@ -118,3 +118,27 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background-color: #3f3f46;
 }
+
+@keyframes pipeline-slide {
+  0% {
+    left: -100px;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+.animate-pipeline-slide {
+  animation: pipeline-slide 3s linear infinite;
+}

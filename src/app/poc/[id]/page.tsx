@@ -41,6 +41,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import ReactMarkdown from 'react-markdown';
+import { MermaidDiagram } from "@/components/MermaidDiagram";
 
 const ICON_MAP: Record<string, any> = {
   Box,
@@ -939,78 +940,48 @@ export default function POCDetailPage({
 
                         <div className="relative z-10 flex items-center justify-between gap-8 max-w-2xl mx-auto">
                           {/* Connecting Line */}
-                          <div className="absolute top-1/2 left-10 right-10 h-0.5 bg-zinc-800 -z-10"></div>
-                          <div className="absolute top-1/2 left-10 right-10 h-0.5 bg-blue-500/20 -z-10 animate-pulse"></div>
+                          <div className="absolute top-1/2 left-10 right-10 h-0.5 bg-zinc-800 -z-10 overflow-hidden rounded-full">
+                            <div className="absolute top-0 h-full w-32 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-pipeline-slide"></div>
+                          </div>
 
                           {/* Source */}
                           <div className="flex flex-col items-center gap-4 bg-[#09090b] p-2">
-                            <div
-                              className={`w-16 h-16 rounded-xl bg-zinc-900 border ${displayArch.source.color === "blue" ? "border-blue-500/50" : displayArch.source.color === "green" ? "border-green-500/50" : "border-zinc-700"} flex items-center justify-center shadow-lg relative group`}
-                            >
-                              <displayArch.source.icon
-                                className={`h-8 w-8 ${displayArch.source.color === "blue" ? "text-blue-400" : displayArch.source.color === "green" ? "text-green-400" : "text-zinc-400"}`}
-                              />
-                              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] text-zinc-400 font-mono">
-                                1
-                              </div>
+                            <div className={`w-16 h-16 rounded-xl bg-zinc-900 border ${displayArch.source.color === "blue" ? "border-blue-500/50" : displayArch.source.color === "green" ? "border-green-500/50" : "border-zinc-700"} flex items-center justify-center shadow-lg relative group`}>
+                              <displayArch.source.icon className={`h-8 w-8 ${displayArch.source.color === "blue" ? "text-blue-400" : displayArch.source.color === "green" ? "text-green-400" : "text-zinc-400"}`} />
                             </div>
                             <div className="text-center">
-                              <div
-                                className="text-sm font-bold text-white max-w-[100px] truncate"
-                                title={displayArch.source.name}
-                              >
+                              <div className="text-sm font-bold text-white max-w-[100px] truncate" title={displayArch.source.name}>
                                 {displayArch.source.name}
                               </div>
-                              <div className="text-xs text-zinc-500">
-                                {displayArch.source.type}
-                              </div>
+                              <div className="text-xs text-zinc-500">{displayArch.source.type}</div>
                             </div>
                           </div>
 
-                          {/* Process (Mule) */}
+                          {/* Process */}
                           <div className="flex flex-col items-center gap-4 bg-[#09090b] p-2">
                             <div className="w-20 h-20 rounded-full bg-zinc-900 border border-purple-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.15)] relative z-10">
                               <displayArch.process.icon className="h-10 w-10 text-purple-400" />
-                              {/* Transformation Icon */}
                               <div className="absolute -bottom-3 bg-zinc-900 border border-zinc-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <Code className="h-3 w-3 text-purple-400" />
-                                <span className="text-[10px] text-zinc-300 font-mono">
-                                  dw 2.0
-                                </span>
+                                <span className="text-[10px] text-zinc-300 font-mono">APP</span>
                               </div>
                             </div>
                             <div className="text-center">
-                              <div className="text-sm font-bold text-white">
-                                {displayArch.process.name}
-                              </div>
-                              <div className="text-xs text-zinc-500">
-                                {displayArch.process.type}
-                              </div>
+                              <div className="text-sm font-bold text-white">{displayArch.process.name}</div>
+                              <div className="text-xs text-zinc-500">{displayArch.process.type}</div>
                             </div>
                           </div>
 
                           {/* Target */}
                           <div className="flex flex-col items-center gap-4 bg-[#09090b] p-2">
-                            <div
-                              className={`w-16 h-16 rounded-xl bg-zinc-900 border ${displayArch.target.color === "green" ? "border-green-500/50" : displayArch.target.color === "blue" ? "border-blue-500/50" : "border-zinc-700"} flex items-center justify-center shadow-lg relative`}
-                            >
-                              <displayArch.target.icon
-                                className={`h-8 w-8 ${displayArch.target.color === "green" ? "text-green-400" : displayArch.target.color === "blue" ? "text-blue-400" : "text-zinc-400"}`}
-                              />
-                              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] text-zinc-400 font-mono">
-                                2
-                              </div>
+                            <div className={`w-16 h-16 rounded-xl bg-zinc-900 border ${displayArch.target.color === "green" ? "border-green-500/50" : displayArch.target.color === "blue" ? "border-blue-500/50" : "border-zinc-700"} flex items-center justify-center shadow-lg relative`}>
+                              <displayArch.target.icon className={`h-8 w-8 ${displayArch.target.color === "green" ? "text-green-400" : displayArch.target.color === "blue" ? "text-blue-400" : "text-zinc-400"}`} />
                             </div>
                             <div className="text-center">
-                              <div
-                                className="text-sm font-bold text-white max-w-[100px] truncate"
-                                title={displayArch.target.name}
-                              >
+                              <div className="text-sm font-bold text-white max-w-[100px] truncate" title={displayArch.target.name}>
                                 {displayArch.target.name}
                               </div>
-                              <div className="text-xs text-zinc-500">
-                                {displayArch.target.type}
-                              </div>
+                              <div className="text-xs text-zinc-500">{displayArch.target.type}</div>
                             </div>
                           </div>
                         </div>
